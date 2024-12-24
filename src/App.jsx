@@ -48,17 +48,25 @@ const App = () => {
       const binaryStr = event.target.result;
       const workbook = XLSX.read(binaryStr, { type: "binary" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet).map((row) => ({
-        ...row,
-        "Partner Approve/Not Approve": row["Partner Approve/Not Approve"] || "",
-        "Metfone Approve/Not Approve": row["Metfone Approve/Not Approve"] || "",
-      }));
+      let rows = XLSX.utils.sheet_to_json(sheet);
+
+      rows = rows.map((row) => {
+        if (row["File Photo"]) {
+          row["File Photo"] = row["File Photo"].split(",").map((url) => {
+            const fileId = url.split("id=")[1];
+            return fileId
+              ? `https://drive.google.com/open?id=${fileId}`
+              : "https://via.placeholder.com/150";
+          });
+        }
+        return row;
+      });
+
       setData(rows);
     };
 
     reader.readAsBinaryString(file);
   };
-
   const handleApproveChange = (rowIndex, field, value) => {
     const updatedData = [...data];
     updatedData[rowIndex][field] = value;
@@ -66,9 +74,17 @@ const App = () => {
   };
 
   const handleExportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    // Filter the data to include only rows where 'Metfone Approve/Not Approve' has been updated
+    const updatedData = data.filter(
+      (row) => row["Metfone Approve/Not Approve"]
+    );
+
+    // Create a new worksheet with the filtered data
+    const worksheet = XLSX.utils.json_to_sheet(updatedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Updated Data");
+
+    // Export the filtered data to an Excel file
     XLSX.writeFile(workbook, "updated_data.xlsx");
   };
 
