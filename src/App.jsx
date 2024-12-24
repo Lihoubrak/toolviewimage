@@ -311,17 +311,21 @@ const App = () => {
             <FaTimes />
           </button>
           <div className="flex flex-wrap justify-center gap-4 p-4">
-            {selectedImages.map((url, idx) => (
-              <img
-                key={idx}
-                src={`https://drive.google.com/thumbnail?id=${
-                  url.split("id=")[1]
-                }`}
-                alt={`Thumbnail ${idx + 1}`}
-                onClick={() => window.open(url, "_blank")}
-                className="cursor-pointer border border-gray-300 rounded shadow-md"
-              />
-            ))}
+            {selectedImages.length > 0 ? (
+              selectedImages.map((url, idx) => (
+                <img
+                  key={idx}
+                  src={`https://drive.google.com/thumbnail?id=${
+                    url.split("id=")[1]
+                  }`}
+                  alt={`Thumbnail ${idx + 1}`}
+                  onClick={() => window.open(url, "_blank")}
+                  className="cursor-pointer border border-gray-300 rounded shadow-md"
+                />
+              ))
+            ) : (
+              <p className="text-center text-gray-500">No images available</p>
+            )}
           </div>
         </div>
       </Modal>
