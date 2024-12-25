@@ -4,7 +4,6 @@ import { Table, Button, Select, Modal, message } from "antd";
 import { FaFileExcel, FaUpload, FaEye } from "react-icons/fa";
 import TopDrawer from "./components/TopDrawer";
 import { getNamesAndValues } from "./utils/getNamesAndValues";
-
 // Configure Modal
 const { Option } = Select;
 
@@ -255,7 +254,16 @@ const processFile = (file) => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">Excel Data Display</h1>
+   <div className="flex  items-center justify-center mb-5 gap-2">
+  <img
+    src="/assets/images/imt4.png"
+    alt="Logo"
+    className="object-cover w-32 h-32" // Adjust the width and height as needed
+  />
+  <h1 className="text-3xl font-bold text-center mt-8 text-blue-600">
+    TOOL VIEW IMAGE
+  </h1>
+</div>
 
       <div className="flex gap-2">
         <div className="mb-6">
@@ -333,7 +341,7 @@ const processFile = (file) => {
           {imageUrl ? (
             <img
               src={`https://drive.google.com/thumbnail?id=${fileId}`}
-              alt={`Image ${idx + 1} - Click to open full size`}
+              alt={`Image ${idx + 1} - Image loading late , please click to open full size`}
               loading="lazy"
               onClick={() => window.open(imageUrl, "_blank")}
               className="cursor-pointer border border-gray-300 rounded w-full h-auto object-contain"
