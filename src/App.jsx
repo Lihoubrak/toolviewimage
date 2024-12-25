@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { Table, Button, Select, Modal, message } from "antd";
 import { FaFileExcel, FaUpload, FaEye } from "react-icons/fa";
 import TopDrawer from "./components/TopDrawer";
+import { getNamesAndValues } from "./utils/getNamesAndValues";
 
 // Configure Modal
 const { Option } = Select;
@@ -14,7 +15,11 @@ const App = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-
+ const { names:Reson_BranchCol } = getNamesAndValues("Reson Branch", data);
+ const { names:detailCol } = getNamesAndValues("DETAIL", data);
+ const { names:Unit_CheckCol } = getNamesAndValues("Unit Check", data);
+ const { names:Unit_OperationCol} = getNamesAndValues("Unit Operation", data);
+ const { names:AccountCol} = getNamesAndValues("Account", data);
   // Handle unsaved data warning on page close
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -110,7 +115,24 @@ const processFile = (file) => {
   const columns = [
     { title: "No.", dataIndex: "Nº", key: "No.", width: 20 },
     { title: "ID Task", dataIndex: "ID Task", key: "ID Task", width: 100 },
-    { title: "Account", dataIndex: "Account", key: "Account", width: 150 },
+    {
+      title: "Account",
+      dataIndex: "Account",
+      key: "Account",
+      width: 150,
+      filters: AccountCol.map((item) => ({
+        text: item,
+        value: item,
+      })),
+      onFilter: (value, record) => record["Account"]?.includes(value),
+      filterSearch: true,
+      sorter: (a, b) => {
+        const accountA = parseFloat(a["Account"]);
+        const accountB = parseFloat(b["Account"]);
+        return accountA - accountB;
+      },
+    }
+,    
     { title: "PRO", dataIndex: "PRO", key: "PRO", width: 100 },
     { title: "Site", dataIndex: "Site", key: "Site", width: 120 },
     { title: "Date Start", dataIndex: "Date Start", key: "Date Start", width: 120 },
@@ -118,21 +140,26 @@ const processFile = (file) => {
     { title: "Service Type", dataIndex: "Service Type", key: "Service Type", width: 120 },
     { title: "Duration", dataIndex: "Duration", key: "Duration", width: 100 },
     { title: "Complaint / Install", dataIndex: "Complaint / Install", key: "Complaint / Install", width: 150 },
-    { title: "Reason Branch", dataIndex: "Reson Branch", key: "Reson Branch", width: 150 },
+    { title: "Reason Branch", dataIndex: "Reson Branch", key: "Reson Branch", width: 160 , 
+      sorter: (a, b) => a["Reson Branch"] < b["Reson Branch"] ? -1 : 1,
+      filters: Reson_BranchCol.map((item) => ({
+        text: item,  
+        value: item, 
+      })),
+      onFilter: (value, record) => record["Reson Branch"]?.includes(value),filterSearch: true,
+    },
     {
       title: "DETAIL",
       dataIndex: "DETAIL",
       key: "DETAIL",
       width: 200,
       sorter: (a, b) => a["DETAIL"] < b["DETAIL"] ? -1 : 1,
-      // filters: [
-      //   { text: 'FBBMF', value: 'FBBMF' },
-      //   { text: 'CC', value: 'CC' },
-      //   { text: 'BOC', value: 'BOC' },
-      //   { text: 'CC + FBBMF', value: 'CC + FBBMF' },
-      //   { text: 'CC + BOC', value: 'CC + BOC' },
-      // ],
-      // onFilter: (value, record) => record["Unit Check"]?.includes(value),
+      filters: detailCol.map((item) => ({
+        text: item,  
+        value: item, 
+      })),
+      onFilter: (value, record) => record["DETAIL"]?.includes(value), filterSearch: true,
+
     },
     {
       title: "Unit Check",
@@ -140,14 +167,12 @@ const processFile = (file) => {
       key: "Unit Check",
       width: 150,
       sorter: (a, b) => a["Unit Check"] < b["Unit Check"] ? -1 : 1,
-      filters: [
-        { text: 'FBBMF', value: 'FBBMF' },
-        { text: 'CC', value: 'CC' },
-        { text: 'BOC', value: 'BOC' },
-        { text: 'CC + FBBMF', value: 'CC + FBBMF' },
-        { text: 'CC + BOC', value: 'CC + BOC' },
-      ],
-      onFilter: (value, record) => record["Unit Check"]?.includes(value),
+      filters: Unit_CheckCol.map((item) => ({
+        text: item,  
+        value: item, 
+      })),
+      onFilter: (value, record) => record["Unit Check"]?.includes(value),filterSearch: true,
+
     },
     {
       title: "Unit Operation",
@@ -155,11 +180,12 @@ const processFile = (file) => {
       key: "Unit Operation",
       width: 160,
       sorter: (a, b) => a["Unit Operation"] < b["Unit Operation"] ? -1 : 1,
-      filters: [
-        { text: 'CNN', value: 'CNN' },
-        { text: 'GIS', value: 'GIS' },
-      ],
-      onFilter: (value, record) => record["Unit Operation"]?.includes(value),
+      filters: Unit_OperationCol.map((item) => ({
+        text: item,  
+        value: item, 
+      })),
+      onFilter: (value, record) => record["Unit Operation"]?.includes(value),filterSearch: true,
+
     },
     {
       title: "Partner approve / Not approve",
