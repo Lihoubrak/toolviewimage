@@ -256,7 +256,7 @@ const processFile = (file) => {
     <div className="min-h-screen bg-gray-100 p-6">
    <div className="flex  items-center justify-center mb-5 gap-2">
   <img
-    src="/assets/images/imt4.png"
+    src="/src/assets/imt4.png"
     alt="Logo"
     className="object-cover w-32 h-32" // Adjust the width and height as needed
   />
