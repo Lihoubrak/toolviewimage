@@ -136,7 +136,10 @@ const processFile = (file) => {
         text: item,
         value: item,
       })),
-      onFilter: (value, record) => record["Account"]?.includes(value),
+      onFilter: (value, record) => {
+        // Convert Account to string before calling includes
+        return record["Account"]?.toString().includes(value);
+      },
       filterSearch: true,
       sorter: (a, b) => {
         const accountA = parseFloat(a["Account"]);
@@ -144,6 +147,7 @@ const processFile = (file) => {
         return accountA - accountB;
       },
     }
+    
 ,    
     { title: "PRO", dataIndex: "PRO", key: "PRO", width: 100 },
     { title: "Site", dataIndex: "Site", key: "Site", width: 120 },
