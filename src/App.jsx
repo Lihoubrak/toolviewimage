@@ -54,8 +54,7 @@ const App = () => {
         if (row["File Photo"]) {
           row["File Photo"] = row["File Photo"].split(",").map((url) => {
             const fileId = url.split("id=")[1];
-            return fileId
-              `https://drive.google.com/open?id=${fileId}`
+            return `https://drive.google.com/open?id=${fileId}`;
           });
         }
         return row;
