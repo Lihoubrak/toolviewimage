@@ -57,11 +57,21 @@ const processFile = (file) => {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     let rows = XLSX.utils.sheet_to_json(sheet);
 
+    // Process the rows and extract Google Drive file IDs
     rows = rows.map((row) => {
       if (row["File Photo"]) {
         row["File Photo"] = row["File Photo"].split(",").map((url) => {
-          const fileId = url.split("id=")[1];
-          return `https://drive.google.com/open?id=${fileId}`;
+          // Match and extract file ID from various Google Drive URLs
+          const fileIdMatch = url.match(
+            /(?:drive|docs)\.google\.com\/(?:.*\/d\/|.*\/file\/d\/|.*\/drive\/folders\/|.*\/open\?id=)([^\/?&=]+)/) ||
+            url.match(/googleusercontent\.com\/.*\/d\/([^\/?&=]+)/) ||
+            url.match(/drive\.google\.com\/.*id=([^\/?&=]+)/);
+          
+          if (fileIdMatch && fileIdMatch[1]) {
+            // Return only the file ID
+            return fileIdMatch[1];
+          }
+          return url; 
         });
       }
       return row;
@@ -71,6 +81,7 @@ const processFile = (file) => {
   };
   reader.readAsBinaryString(file);
 };
+
 
   const handleApproveChange = (index, column, value) => {
     const newData = [...data];
@@ -107,6 +118,7 @@ const processFile = (file) => {
     setSelectedImages(images || []);
     setIsModalOpen(true);
   };
+  
 
   const filteredData = data.filter((row) =>
     row["ID Task"]?.toString().toLowerCase().includes(searchQuery.toLowerCase())
@@ -229,7 +241,8 @@ const processFile = (file) => {
           View Images
         </Button>
       ),
-    },
+    }
+    
   ];
 
   const handleViewDetail = () => {
@@ -302,24 +315,27 @@ const processFile = (file) => {
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         width="80%"
+        key={selectedImages.join(",")} 
       >
      <div className="flex flex-wrap p-4">
   {selectedImages.length > 0 ? (
-    selectedImages.map((url, idx) => {
-      const fileId = url.includes("id=") ? url.split("id=")[1] : null;
-      const imageUrl = fileId && fileId !== "undefined" ? `https://drive.google.com/thumbnail?id=${fileId}` : null;
-
+    selectedImages.map((fileId, idx) => {
+      // Generate the full Google Drive URL to view the file
+      const imageUrl = (fileId && fileId !== '#N/A' && fileId !== "") ? `https://drive.google.com/file/d/${fileId}/view` : null;
+      console.log(imageUrl);
+      
       return (
         <div key={idx} className="w-1/3 p-2">
           {imageUrl ? (
             <img
-              src={imageUrl}
-              alt={`Image has been loaded late, you can click now to view ${idx + 1}`}
-              onClick={() => window.open(url, "_blank")}
+              src={`https://drive.google.com/thumbnail?id=${fileId}`}
+              alt={`Image ${idx + 1} - Click to open full size`}
+              loading="lazy"
+              onClick={() => window.open(imageUrl, "_blank")}
               className="cursor-pointer border border-gray-300 rounded w-full h-auto object-contain"
             />
           ) : (
-            <p className="text-center text-red-500 text-4xl flex justify-center">No image available</p>
+            <p className="text-center text-red-500 text-xl">No image available</p>
           )}
         </div>
       );
@@ -328,6 +344,8 @@ const processFile = (file) => {
     <p className="text-center text-gray-500">No images available</p>
   )}
 </div>
+
+
 
       </Modal>
 
