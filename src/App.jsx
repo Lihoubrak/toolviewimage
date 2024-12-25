@@ -55,8 +55,7 @@ const App = () => {
           row["File Photo"] = row["File Photo"].split(",").map((url) => {
             const fileId = url.split("id=")[1];
             return fileId
-              ? `https://drive.google.com/open?id=${fileId}`
-              : "https://via.placeholder.com/150";
+              `https://drive.google.com/open?id=${fileId}`
           });
         }
         return row;
@@ -172,32 +171,32 @@ const App = () => {
       sortable: true,
       wrap: true,
     },
-    // {
-    //   name: "Partner Approve/Not Approve",
-    //   cell: (row, index) => (
-    //     <select
-    //       value={row["Partner Approve/Not Approve"]}
-    //       onChange={(e) =>
-    //         handleApproveChange(
-    //           index,
-    //           "Partner Approve/Not Approve",
-    //           e.target.value
-    //         )
-    //       }
-    //       className="p-2 border rounded"
-    //     >
-    //       <option value="">Select</option>
-    //       <option value="Approve">Approve</option>
-    //       <option value="Not Approve">Not Approve</option>
-    //     </select>
-    //   ),
-    // },
+    {
+      name: "Partner Approve/Not Approve",
+      cell: (row, index) => (
+        <select
+          value={row["Partner Approve/Not Approve"]}
+          onChange={(e) =>
+            handleApproveChange(
+              index,
+              "Partner Approve/Not Approve",
+              e.target.value
+            )
+          }
+          className="p-2 border rounded"
+        >
+          <option value="">Select</option>
+          <option value="Approve">Approve</option>
+          <option value="Not Approve">Not Approve</option>
+        </select>
+      ),
+    },
     {
       name: "Metfone Approve/Not Approve",
       width: "150px",
       cell: (row, index) => (
         <select
-          value={row["Metfone Approve/Not Approve"]}
+          value={row["Metfone Approve/Not Approve"] || ""}
           onChange={(e) =>
             handleApproveChange(
               index,
@@ -212,7 +211,8 @@ const App = () => {
           <option value="Not Approve">Not Approve</option>
         </select>
       ),
-    },
+    }
+,    
     {
       name: "File Photo",
       width: "150px",
