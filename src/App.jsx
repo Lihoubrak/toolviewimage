@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
-import Modal from "react-modal";
-import { FaTimes } from "react-icons/fa";
-import DataTable from "react-data-table-component";
+import { Table, Button, Select, Modal, message } from "antd";
+import { FaFileExcel, FaUpload, FaEye } from "react-icons/fa";
+import TopDrawer from "./components/TopDrawer";
 
 // Configure Modal
-Modal.setAppElement("#root");
+const { Option } = Select;
 
 const App = () => {
   const [data, setData] = useState([]);
@@ -13,7 +13,9 @@ const App = () => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
+  // Handle unsaved data warning on page close
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (data.length > 0) {
@@ -26,65 +28,75 @@ const App = () => {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [data]);
+ // Handle file change (triggered by the file input)
+ const handleFileChange = (e) => {
+  const selectedFile = e.target.files[0];
+  if (
+    selectedFile &&
+    selectedFile.type ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  ) {
+    setFile(selectedFile);
+    processFile(selectedFile); // Process the file immediately after selection
+  } else {
+    alert("Please upload a valid Excel file.");
+  }
+};
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (
-      selectedFile &&
-      selectedFile.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ) {
-      setFile(selectedFile);
-    } else {
-      alert("Please upload a valid Excel file.");
-    }
+// Process the uploaded file
+const processFile = (file) => {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const binaryStr = event.target.result;
+    const workbook = XLSX.read(binaryStr, { type: "binary" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    let rows = XLSX.utils.sheet_to_json(sheet);
+
+    rows = rows.map((row) => {
+      if (row["File Photo"]) {
+        row["File Photo"] = row["File Photo"].split(",").map((url) => {
+          const fileId = url.split("id=")[1];
+          return `https://drive.google.com/open?id=${fileId}`;
+        });
+      }
+      return row;
+    });
+
+    setData(rows); // Set the data state with the processed rows
   };
+  reader.readAsBinaryString(file);
+};
 
-  const handleFileUpload = () => {
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const binaryStr = event.target.result;
-      const workbook = XLSX.read(binaryStr, { type: "binary" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      let rows = XLSX.utils.sheet_to_json(sheet);
-
-      rows = rows.map((row) => {
-        if (row["File Photo"]) {
-          row["File Photo"] = row["File Photo"].split(",").map((url) => {
-            const fileId = url.split("id=")[1];
-            return `https://drive.google.com/open?id=${fileId}`;
-          });
-        }
-        return row;
-      });
-
-      setData(rows);
-    };
-
-    reader.readAsBinaryString(file);
-  };
-  const handleApproveChange = (rowIndex, field, value) => {
-    const updatedData = [...data];
-    updatedData[rowIndex][field] = value;
-    setData(updatedData);
+  const handleApproveChange = (index, column, value) => {
+    const newData = [...data];
+    newData[index][column] = value;
+    setData(newData);
+    message.success('Approval status updated successfully!');
   };
 
   const handleExportToExcel = () => {
-    // Filter the data to include only rows where 'Metfone Approve/Not Approve' has been updated
+    // Filter out the rows that have an approval status (Metfone or Partner)
     const updatedData = data.filter(
-      (row) => row["Metfone Approve/Not Approve"]
+      (row) => row["Metfone Approve / Not approve"] || row["Partner approve / Not approve"]
     );
-
-    // Create a new worksheet with the filtered data
-    const worksheet = XLSX.utils.json_to_sheet(updatedData);
+  
+    // Ensure that the image links are correctly handled (you may need to format them properly if not already done)
+    const formattedData = updatedData.map((row) => {
+      if (row["File Photo"]) {
+        // Ensure the image URL is included in the exported data (keep it in the correct format)
+        row["File Photo"] = row["File Photo"].join(", "); // If there are multiple images, join them with a comma
+      }
+      return row;
+    });
+  
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Updated Data");
-
-    // Export the filtered data to an Excel file
+  
+    // Export the data with the images (links)
     XLSX.writeFile(workbook, "updated_data.xlsx");
   };
+  
 
   const handleViewImages = (images) => {
     setSelectedImages(images || []);
@@ -96,238 +108,212 @@ const App = () => {
   );
 
   const columns = [
-    { name: "No.", selector: (row) => row["Nº"], sortable: true, wrap: true },
+    { title: "No.", dataIndex: "Nº", key: "No.", width: 20 },
+    { title: "ID Task", dataIndex: "ID Task", key: "ID Task", width: 100 },
+    { title: "Account", dataIndex: "Account", key: "Account", width: 150 },
+    { title: "PRO", dataIndex: "PRO", key: "PRO", width: 100 },
+    { title: "Site", dataIndex: "Site", key: "Site", width: 120 },
+    { title: "Date Start", dataIndex: "Date Start", key: "Date Start", width: 120 },
+    { title: "Date Finish", dataIndex: "Date Finish", key: "Date Finish", width: 120 },
+    { title: "Service Type", dataIndex: "Service Type", key: "Service Type", width: 120 },
+    { title: "Duration", dataIndex: "Duration", key: "Duration", width: 100 },
+    { title: "Complaint / Install", dataIndex: "Complaint / Install", key: "Complaint / Install", width: 150 },
+    { title: "Reason Branch", dataIndex: "Reson Branch", key: "Reson Branch", width: 150 },
     {
-      name: "ID Task",
-      selector: (row) => row["ID Task"],
-      sortable: true,
-      wrap: true,
+      title: "DETAIL",
+      dataIndex: "DETAIL",
+      key: "DETAIL",
+      width: 200,
+      sorter: (a, b) => a["DETAIL"] < b["DETAIL"] ? -1 : 1,
+      // filters: [
+      //   { text: 'FBBMF', value: 'FBBMF' },
+      //   { text: 'CC', value: 'CC' },
+      //   { text: 'BOC', value: 'BOC' },
+      //   { text: 'CC + FBBMF', value: 'CC + FBBMF' },
+      //   { text: 'CC + BOC', value: 'CC + BOC' },
+      // ],
+      // onFilter: (value, record) => record["Unit Check"]?.includes(value),
     },
     {
-      name: "Account",
-      selector: (row) => row["Account"],
-      sortable: true,
-      wrap: true,
-    },
-    { name: "PRO", selector: (row) => row["PRO"], sortable: true, wrap: true },
-    {
-      name: "Site",
-      selector: (row) => row["Site"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Date Start",
-      selector: (row) => row["Date Start"],
-      sortable: true,
-      wrap: true,
+      title: "Unit Check",
+      dataIndex: "Unit Check",
+      key: "Unit Check",
+      width: 150,
+      sorter: (a, b) => a["Unit Check"] < b["Unit Check"] ? -1 : 1,
+      filters: [
+        { text: 'FBBMF', value: 'FBBMF' },
+        { text: 'CC', value: 'CC' },
+        { text: 'BOC', value: 'BOC' },
+        { text: 'CC + FBBMF', value: 'CC + FBBMF' },
+        { text: 'CC + BOC', value: 'CC + BOC' },
+      ],
+      onFilter: (value, record) => record["Unit Check"]?.includes(value),
     },
     {
-      name: "Date Finish",
-      selector: (row) => row["Date Finish"],
-      sortable: true,
-      wrap: true,
+      title: "Unit Operation",
+      dataIndex: "Unit Operation",
+      key: "Unit Operation",
+      width: 160,
+      sorter: (a, b) => a["Unit Operation"] < b["Unit Operation"] ? -1 : 1,
+      filters: [
+        { text: 'CNN', value: 'CNN' },
+        { text: 'GIS', value: 'GIS' },
+      ],
+      onFilter: (value, record) => record["Unit Operation"]?.includes(value),
     },
     {
-      name: "Service Type",
-      selector: (row) => row["Service Type"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Duration",
-      selector: (row) => row["Duration"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Complaint / Install",
-      selector: (row) => row["Complaint / Install"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Reason Branch",
-      selector: (row) => row["Reson Branch"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "DETAIL",
-      selector: (row) => row["DETAIL"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Unit Check",
-      selector: (row) => row["Unit Check"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Unit Operation",
-      selector: (row) => row["Unit Operation"],
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Partner Approve/Not Approve",
-      cell: (row, index) => (
-        <select
-          value={row["Partner Approve/Not Approve"]}
-          onChange={(e) =>
-            handleApproveChange(
-              index,
-              "Partner Approve/Not Approve",
-              e.target.value
-            )
-          }
-          className="p-2 border rounded"
+      title: "Partner approve / Not approve",
+      dataIndex: "Partner approve / Not approve",
+      key: "Partner approve / Not approve",
+      width: 180,
+      render: (text, record, index) => (
+        <Select
+          value={record["Partner approve / Not approve"]} // This ensures the value is correctly bound to the state
+          onChange={(value) => handleApproveChange(index, "Partner approve / Not approve", value)} // Update the specific field
+          style={{ width: 120 }}
         >
-          <option value="">Select</option>
-          <option value="Approve">Approve</option>
-          <option value="Not Approve">Not Approve</option>
-        </select>
+          <Option value="Approve">Approve</Option>
+          <Option value="Not Approve">Not Approve</Option>
+        </Select>
       ),
     },
     {
-      name: "Metfone Approve/Not Approve",
-      width: "150px",
-      cell: (row, index) => (
-        <select
-          value={row["Metfone Approve/Not Approve"] || ""}
-          onChange={(e) =>
-            handleApproveChange(
-              index,
-              "Metfone Approve/Not Approve",
-              e.target.value
-            )
-          }
-          className="p-2 border rounded"
+      title: "Metfone Approve/Not Approve",
+      dataIndex: "Metfone Approve / Not approve",
+      key: "Metfone Approve/Not Approve",
+      width: 180,
+      render: (text, record, index) => (
+        <Select
+          value={record["Metfone Approve / Not approve"]} // Correct binding here as well
+          onChange={(value) => handleApproveChange(index, "Metfone Approve / Not approve", value)}
+          style={{ width: 120 }}
         >
-          <option value="">Select</option>
-          <option value="Approve">Approve</option>
-          <option value="Not Approve">Not Approve</option>
-        </select>
+          <Option value="Approve">Approve</Option>
+          <Option value="Not Approve">Not Approve</Option>
+        </Select>
       ),
-    }
-,    
+    },
+    
     {
-      name: "File Photo",
-      width: "150px",
-      cell: (row) => (
-        <button
-          onClick={() => handleViewImages(row["File Photo"])}
-          className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
+      title: "File Photo",
+      key: "File Photo",
+      width: 120,
+      render: (text, record) => (
+        <Button onClick={() => handleViewImages(record["File Photo"])} type="primary">
           View Images
-        </button>
+        </Button>
       ),
     },
   ];
 
+  const handleViewDetail = () => {
+    setIsDrawerVisible(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">
-        Excel Data Display
-      </h1>
+      <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">Excel Data Display</h1>
 
-      <div className="flex flex-col items-center mb-6">
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleFileChange}
-          className="mb-4 p-2 border border-gray-300 rounded shadow-sm"
-        />
-        <button
-          onClick={handleFileUpload}
-          disabled={!file}
-          className={`px-4 py-2 rounded text-white font-semibold ${
-            file
-              ? "bg-blue-500 hover:bg-blue-600"
-              : "bg-gray-400 cursor-not-allowed"
-          }`}
-        >
-          Upload Excel
-        </button>
-      </div>
-
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search by ID Task"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded shadow-sm"
-        />
-      </div>
-      <div className="my-4 flex justify-end">
-        <button
-          onClick={handleExportToExcel}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          Export to Excel
-        </button>
-      </div>
-
-      <DataTable
-        title="Excel Data"
-        columns={columns}
-        data={filteredData}
-        pagination
-        highlightOnHover
-        responsive
-      />
-      <Modal
-        isOpen={isModalOpen}
-        onRequestClose={() => setIsModalOpen(false)}
-        style={{
-          content: {
-            top: "0%",
-            left: "0%",
-            right: "0%",
-            bottom: "0%",
-            margin: 0,
-            padding: 0,
-            transform: "none",
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            overflow: "hidden", // Ensure overflow is hidden for the background
-            backgroundColor: "#000",
-          },
-          overlay: { backgroundColor: "rgba(0, 0, 0, 0.9)" },
-        }}
-      >
-        <div className="relative w-full h-full">
-          <button
-            onClick={() => setIsModalOpen(false)}
-            className="absolute top-2 right-2 text-white bg-red-500 rounded-full p-2 hover:bg-red-600 z-10"
-          >
-            <FaTimes />
-          </button>
-          <div className="flex flex-wrap justify-center gap-4 p-4 overflow-y-auto w-full h-full">
-            {selectedImages.length > 0 ? (
-              selectedImages.map((url, idx) => (
-                <div key={idx} className="w-1/3 p-2">
-                  <img
-                    src={`https://drive.google.com/thumbnail?id=${
-                      url.split("id=")[1]
-                    }`}
-                    alt={`Thumbnail ${idx + 1}`}
-                    onClick={() => window.open(url, "_blank")}
-                    className="cursor-pointer border border-gray-300 rounded shadow-md w-full h-auto object-contain"
-                  />
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-gray-500">No images available</p>
-            )}
-          </div>
+      <div className="flex gap-2">
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search by ID Task"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded shadow-sm"
+          />
         </div>
+
+        <div className="flex flex-col items-center mb-6">
+          <button
+            onClick={handleViewDetail}
+            className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-green-500 hover:bg-green-600"
+          >
+            <FaEye className="mr-2" />
+            <p>Reason Branch</p>
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center mb-6">
+          <button
+            onClick={handleExportToExcel}
+            className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-red-500 hover:bg-red-600"
+          >
+            <FaFileExcel className="mr-2" />
+            <p>Export to Excel</p>
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center mb-6">
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+            id="file-upload"
+          />
+          <button
+            onClick={() => document.getElementById('file-upload').click()}
+            className="px-4 py-2 rounded flex justify-center items-center text-white font-semibold bg-blue-500 hover:bg-blue-600"
+          >
+            <FaUpload className="mr-2" /> Upload Excel
+          </button>
+        </div>
+      </div>
+
+      <Table
+        columns={columns}
+        dataSource={filteredData}
+        pagination
+        rowKey={(record) => record["ID Task"]}
+        scroll={{ x: "max-content" }}
+      />
+
+      {/* Ant Design Modal */}
+      <Modal
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        width="80%"
+      >
+     <div className="flex flex-wrap p-4">
+  {selectedImages.length > 0 ? (
+    selectedImages.map((url, idx) => {
+      const fileId = url.includes("id=") ? url.split("id=")[1] : null;
+      const imageUrl = fileId && fileId !== "undefined" ? `https://drive.google.com/thumbnail?id=${fileId}` : null;
+
+      return (
+        <div key={idx} className="w-1/3 p-2">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={`Image has been loaded late, you can click now to view ${idx + 1}`}
+              onClick={() => window.open(url, "_blank")}
+              className="cursor-pointer border border-gray-300 rounded w-full h-auto object-contain"
+            />
+          ) : (
+            <p className="text-center text-red-500 text-4xl flex justify-center">No image available</p>
+          )}
+        </div>
+      );
+    })
+  ) : (
+    <p className="text-center text-gray-500">No images available</p>
+  )}
+</div>
+
       </Modal>
+
+      {/* Drawer to display Reason Branch details */}
+      <TopDrawer
+        title="Reason Branch Detail"
+        placement="right"
+        onClose={() => setIsDrawerVisible(false)}
+        visible={isDrawerVisible}
+        width={400}
+        data={data}
+      />
     </div>
   );
 };
