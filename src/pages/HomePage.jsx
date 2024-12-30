@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import TopDrawer from '../components/TopDrawer';
 import * as XLSX from "xlsx";
 import { FaEye, FaFileExcel, FaUpload } from 'react-icons/fa';
@@ -13,6 +13,7 @@ const HomePage = () => {
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [searchQuery, setSearchQuery] = useState("");
       const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+      const [originalData, setOriginalData] = useState([]);
      const { names:Reson_BranchCol } = getNamesAndValues("Reson Branch", data);
      const { names:detailCol } = getNamesAndValues("DETAIL", data);
      const { names:Unit_CheckCol } = getNamesAndValues("Unit Check", data);
@@ -40,23 +41,46 @@ const HomePage = () => {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
       setFile(selectedFile);
-      processFile(selectedFile, setData); // Pass setData here
+      processFile(selectedFile, (processedData) => {
+        setData(processedData);
+        setOriginalData(processedData);
+      });
     } else {
       alert("Please upload a valid Excel file.");
     }
   };
-  
+  const filteredData = useMemo(() => {
+    return data.filter((row) =>
+      row["ID Task"]?.toString().toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [data, searchQuery]);
   const handleApproveChange = (index, column, value) => {
     const newData = [...data];
-    newData[index] = { ...newData[index], [column]: value };
-    console.log("value",value);
-    setData(newData);
-    message.success('Approval status updated successfully!');
+    const recordIndex = data.findIndex(
+      (row) => row["ID Task"] === filteredData[index]["ID Task"]
+    );
+  
+    if (recordIndex !== -1) {
+      newData[recordIndex] = { ...newData[recordIndex], [column]: value };
+      setData(newData); // Update the main data source
+      message.success("Approval status updated successfully!");
+    } else {
+      message.error("Failed to update approval status.");
+    }
   };
+  const handleTableChange = (pagination, filters, sorter) => {
+    // If no filters are applied, reset the data to the original data
+    if (Object.keys(filters).every((columnKey) => !filters[columnKey]?.length)) {
+      console.log("No filters applied, showing original data");
+      setData(originalData); // Reset to the original data
+      return;
+    }
+  };
+  
   
   const handleExportToExcel = () => {
     const updatedData = data.filter(
-      (row) => row["Metfone Approve / Not approve"] || row["Partner approve / Not approve"]
+      (row) => row["Metfone Approve /Not approve"] || row["Partner approve /Not approve"]
     );
   
     const formattedData = updatedData.map((row) => {
@@ -92,12 +116,7 @@ const HomePage = () => {
       setIsModalOpen(true);
     };
     
-  
-    const filteredData = data.filter((row) =>
-      row["ID Task"]?.toString().toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-  
+
   
     const handleViewDetail = () => {
       setIsDrawerVisible(true);
@@ -241,11 +260,24 @@ const HomePage = () => {
       title: "File Photo",
       key: "File Photo",
       width: 120,
-      render: (text, record) => (
-        <Button onClick={() => handleViewImages(record["File Photo"])} type="primary">
-          View Images
-        </Button>
-      ),
+      render: (text, record) => {
+        const hasImage = record["File Photo"] && record["File Photo"].some((url) => url && url !== "#N/A");
+
+        return (
+          <Button
+            onClick={() => handleViewImages(record["File Photo"])}
+            type={hasImage ? "primary" : "default"}  // Change button type based on condition
+            style={{
+              backgroundColor: hasImage ? "#4CAF50" : "#f44336", // Green if has image, Red if not
+              color: "#fff", // White text color
+              borderRadius: "5px", // Rounded corners
+              padding: "5px 10px", // Button padding
+            }}
+          >
+            {hasImage ? "View Images" : "No Images"}
+          </Button>
+        );
+      },
       filters: [
         { text: 'Has Image', value: 'hasImage' },
         { text: 'No Image', value: 'noImage' },
@@ -323,6 +355,7 @@ const HomePage = () => {
         pagination
         rowKey={(record) => record["ID Task"]}
         scroll={{ x: "max-content" }}
+        onChange={handleTableChange}
       />
 
       {/* Ant Design Modal */}
@@ -339,8 +372,7 @@ const HomePage = () => {
     selectedImages.map((fileId, idx) => {
       // Generate the full Google Drive URL to view the file
       const imageUrl = (fileId && fileId !== '#N/A' && fileId !== "") ? `https://drive.google.com/file/d/${fileId}/view` : null;
-      console.log(imageUrl);
-      
+   
       return (
         <div key={idx} className="w-1/3 p-2">
           {imageUrl ? (
@@ -358,7 +390,7 @@ const HomePage = () => {
       );
     })
   ) : (
-    <p className="text-center text-gray-500">No images available</p>
+    <p className="text-center text-red-500 text-xl">No images available</p>
   )}
 </div>
 
