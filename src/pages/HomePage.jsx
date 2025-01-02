@@ -19,6 +19,7 @@ const HomePage = () => {
      const { names:Unit_CheckCol } = getNamesAndValues("Unit Check", data);
      const { names:Unit_OperationCol} = getNamesAndValues("Unit Operation", data);
      const { names:AccountCol} = getNamesAndValues("Account", data);
+     const { names:SiteCol} = getNamesAndValues("Site", data);
      
      useEffect(() => {
         const handleBeforeUnload = (e) => {
@@ -147,7 +148,12 @@ const HomePage = () => {
     
 ,    
     { title: "PRO", dataIndex: "PRO", key: "PRO", width: 100 },
-    { title: "Site", dataIndex: "Site", key: "Site", width: 120 },
+    { title: "Site", dataIndex: "Site", key: "Site", width: 120,  sorter: (a, b) => a["Site"] < b["Site"] ? -1 : 1,
+      filters: SiteCol.map((item) => ({
+        text: item,  
+        value: item, 
+      })),
+      onFilter: (value, record) => record["Site"]?.includes(value),filterSearch: true, },
     {
       title: "Date Start",
       dataIndex: "Date Start",
