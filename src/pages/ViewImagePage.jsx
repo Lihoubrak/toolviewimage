@@ -13,7 +13,7 @@ const ViewImagePage = () => {
       </div>
 
       {/* Nội dung của trang View Image */}
-      <div className="max-w-screen-xl mx-auto px-4">
+      <div className=" mx-auto">
         <div className="bg-white shadow-lg p-6 rounded-lg mb-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Image Viewer</h2>
           <p className="text-gray-600 mb-6">View your images here, explore and analyze them.</p>

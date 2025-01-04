@@ -1,38 +1,36 @@
 import React, { useState } from 'react';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
-import { FileImageOutlined, DashboardOutlined, BarChartOutlined, SettingOutlined } from '@ant-design/icons';
+import { FileImageOutlined, BarChartOutlined } from '@ant-design/icons';
 
-const { Header, Content, Sider } = Layout;
+const { Sider, Content } = Layout;
 
-// Hàm tạo các item cho menu
+// Function to generate menu items
 function getItem(label, key, icon, link) {
-  return {
-    key,
-    icon,
-    label,
-    link,
-  };
+  return { key, icon, label, link };
 }
 
-// Add more items to the sidebar menu
+// Sidebar menu items
 const items = [
   getItem('View Image', '1', <FileImageOutlined />, '/'),
   getItem('KPI', '2', <BarChartOutlined />, '/kpi'),
-//   getItem('Reports', '3', <BarChartOutlined />, '/reports'),
-//   getItem('Settings', '4', <SettingOutlined />, '/settings'),
 ];
 
 const LayoutGlobal = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [selectedKey, setSelectedKey] = useState('1'); // Track selected key
+
+  const handleMenuClick = (e) => {
+    setSelectedKey(e.key); // Update selected key when a menu item is clicked
+  };
 
   return (
-    <Layout className="min-h-screen">
+    <Layout>
       {/* Sidebar */}
       <Sider
         collapsible
         collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
+        onCollapse={setCollapsed}
         className="bg-gray-800 text-white fixed top-0 bottom-0 left-0 z-10"
         width={240}
       >
@@ -44,19 +42,23 @@ const LayoutGlobal = ({ children }) => {
             className="w-12 h-12"
           />
         </div>
-        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
-          {items.map((item) => (
-            <Menu.Item key={item.key} icon={item.icon}>
-              <Link to={item.link}>{item.label}</Link>
-            </Menu.Item>
-          ))}
-        </Menu>
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[selectedKey]} // Dynamically set the selected key
+          onClick={handleMenuClick} // Handle click to update state
+          items={items.map((item) => ({
+            key: item.key,
+            icon: item.icon,
+            label: <Link to={item.link}>{item.label}</Link>,
+          }))}
+        />
       </Sider>
 
       {/* Main Layout */}
-      <Layout style={{ marginLeft: collapsed ? 80 : 240 }}>
-        <Content className="p-8 overflow-auto h-full bg-gray-50 rounded-xl shadow-md">
-          {/* Nội dung của các trang con */}
+      <Layout style={{ marginLeft: collapsed ? 80 : 240, transition: 'margin-left 0.2s' }}>
+        <Content className="p-3">
+          {/* Child content */}
           {children}
         </Content>
       </Layout>
