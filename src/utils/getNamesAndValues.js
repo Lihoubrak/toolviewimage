@@ -1,4 +1,9 @@
 export const getNamesAndValues = (columnName, data) => {
+  if (!Array.isArray(data)) {
+    console.error('Data must be an array.');
+    return { names: [], values: [] }; // Return empty arrays if data is not an array
+  }
+
   const counts = {};
 
   // Loop through the data array to count occurrences
@@ -15,4 +20,3 @@ export const getNamesAndValues = (columnName, data) => {
 
   return { names, values };
 };
-

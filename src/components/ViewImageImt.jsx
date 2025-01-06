@@ -1,264 +1,245 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import TopDrawer from '../components/TopDrawer';
-import * as XLSX from "xlsx";
-import { FaEye, FaFileExcel, FaUpload } from 'react-icons/fa';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Modal, Table, Select, message } from 'antd';
+import { FaEye, FaFileExcel, FaUpload } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
+import TopDrawer from '../components/TopDrawer';
 import { getNamesAndValues } from '../utils/getNamesAndValues';
 import { processFile } from '../utils/excelUtils';
+
 const { Option } = Select;
+
 const ViewImageImt = () => {
-      const [data, setData] = useState([]);
-      const [file, setFile] = useState(null);
-      const [selectedImages, setSelectedImages] = useState([]);
-      const [isModalOpen, setIsModalOpen] = useState(false);
-      const [searchQuery, setSearchQuery] = useState("");
-      const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-      const [originalData, setOriginalData] = useState([]);
-     const { names:Reson_BranchCol } = getNamesAndValues("Reson Branch", data);
-     const { names:detailCol } = getNamesAndValues("DETAIL", data);
-     const { names:Unit_CheckCol } = getNamesAndValues("Unit Check", data);
-     const { names:Unit_OperationCol} = getNamesAndValues("Unit Operation", data);
-     const { names:AccountCol} = getNamesAndValues("Account", data);
-     const { names:SiteCol} = getNamesAndValues("Site", data);
-     
-     useEffect(() => {
-        const handleBeforeUnload = (e) => {
-          if (data.length > 0) {
-            e.preventDefault();
-            e.returnValue =
-              "Are you sure you want to leave? Unsaved data will be lost.";
-          }
-        };
-    
-        window.addEventListener("beforeunload", handleBeforeUnload);
-        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-      }, [data]);
- // Handle file change (triggered by the file input)
- const handleFileChange = (e) => {
+  const [data, setData] = useState([]);
+  const [file, setFile] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [originalData, setOriginalData] = useState([]);
+
+  // Extract column names
+  const { names: ResonBranchCol } = getNamesAndValues('Reson Branch', data);
+  const { names: DetailCol } = getNamesAndValues('DETAIL', data);
+  const { names: UnitCheckCol } = getNamesAndValues('Unit Check', data);
+  const { names: UnitOperationCol } = getNamesAndValues('Unit Operation', data);
+  const { names: AccountCol } = getNamesAndValues('Account', data);
+  const { names: SiteCol } = getNamesAndValues('Site', data);
+
+  // Handle window close or reload
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (data.length > 0) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Unsaved data will be lost.';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [data]);
+
+  // Handle file input change
+  const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (
-      selectedFile &&
-      selectedFile.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ) {
+    if (selectedFile && selectedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
       setFile(selectedFile);
       processFile(selectedFile, (processedData) => {
         setData(processedData);
         setOriginalData(processedData);
       });
     } else {
-      alert("Please upload a valid Excel file.");
+      alert('Please upload a valid Excel file.');
     }
   };
+
+  // Filter data based on search query
   const filteredData = useMemo(() => {
     return data.filter((row) =>
-      row["ID Task"]?.toString().toLowerCase().includes(searchQuery.toLowerCase())
+      row['ID Task']?.toString().toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [data, searchQuery]);
+
+  // Handle approval status change
   const handleApproveChange = (index, column, value) => {
     const newData = [...data];
     const recordIndex = data.findIndex(
-      (row) => row["ID Task"] === filteredData[index]["ID Task"]
+      (row) => row['ID Task'] === filteredData[index]['ID Task']
     );
   
     if (recordIndex !== -1) {
       newData[recordIndex] = { ...newData[recordIndex], [column]: value };
-      setData(newData); // Update the main data source
-      message.success("Approval status updated successfully!");
+      setData(newData);
+      message.success('Approval status updated successfully!');  // Success message
     } else {
-      message.error("Failed to update approval status.");
+      message.error('Failed to update approval status.');  // Error message if not found
     }
   };
+  
+  // Handle table change (pagination, sorting, etc.)
   const handleTableChange = (pagination, filters, sorter) => {
-    // If no filters are applied, reset the data to the original data
     if (Object.keys(filters).every((columnKey) => !filters[columnKey]?.length)) {
-      console.log("No filters applied, showing original data");
-      setData(originalData); // Reset to the original data
+      setData(originalData);
       return;
     }
   };
-  
-  
-  const handleExportToExcel = () => {
-    const updatedData = data.filter(
-      (row) => row["Metfone Approve /Not approve"] || row["Partner approve /Not approve"]
-    );
-  
-    const formattedData = updatedData.map((row) => {
-      if (row["File Photo"]) {
-        if (Array.isArray(row["File Photo"])) {
-          // Filter out invalid IDs from the array
-          row["File Photo"] = row["File Photo"]
-            .filter((imageId) => imageId && imageId !== "#N/A")
-            .map((imageId) => `https://drive.google.com/file/d/${imageId}/view`)
-            .join(", ");
-        } else if (row["File Photo"] !== "#N/A" && row["File Photo"] !== "") {
-          // Handle single valid ID
-          row["File Photo"] = `https://drive.google.com/file/d/${row["File Photo"]}/view`;
-        } else {
-          // If invalid, set it as empty
-          row["File Photo"] = "#N/A";
-        }
+
+  // Export data to Excel
+// Export data to Excel
+const handleExportToExcel = () => {
+  const updatedData = data.filter(
+    (row) => row['Metfone Approve / Not approve'] || row['Partner approve / Not approve']
+  );
+
+  if (!updatedData.length) {
+    message.warning('No data to export.');
+    return;
+  }
+
+  const formattedData = updatedData.map((row) => {
+    if (row['File Photo']) {
+      if (Array.isArray(row['File Photo'])) {
+        row['File Photo'] = row['File Photo']
+          .filter((imageId) => imageId && imageId !== '#N/A')
+          .map((imageId) => `https://drive.google.com/file/d/${imageId}/view`)
+          .join(', ');
+      } else if (row['File Photo'] !== '#N/A' && row['File Photo'] !== '') {
+        row['File Photo'] = `https://drive.google.com/file/d/${row['File Photo']}/view`;
+      } else {
+        row['File Photo'] = '#N/A';
       }
-      return row;
-    });
-  
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Updated Data");
-  
-    XLSX.writeFile(workbook, "updated_data.xlsx");
-  };
-  
-  
-  
-    const handleViewImages = (images) => {
-      setSelectedImages(images || []);
-      setIsModalOpen(true);
-    };
-    
-
-  
-    const handleViewDetail = () => {
-      setIsDrawerVisible(true);
-    };
-  const columns = [
-    { title: "No.", dataIndex: "Nº", key: "No.", width: 20 },
-    { title: "ID Task", dataIndex: "ID Task", key: "ID Task", width: 100 },
-    {
-      title: "Account",
-      dataIndex: "Account",
-      key: "Account",
-      width: 150,
-      filters: AccountCol.map((item) => ({
-        text: item,
-        value: item,
-      })),
-      onFilter: (value, record) => {
-        // Convert Account to string before calling includes
-        return record["Account"]?.toString().includes(value);
-      },
-      filterSearch: true,
-      sorter: (a, b) => {
-        const accountA = parseFloat(a["Account"]);
-        const accountB = parseFloat(b["Account"]);
-        return accountA - accountB;
-      },
     }
-    
-,    
-    { title: "PRO", dataIndex: "PRO", key: "PRO", width: 100 },
-    { title: "Site", dataIndex: "Site", key: "Site", width: 120,  sorter: (a, b) => a["Site"] < b["Site"] ? -1 : 1,
-      filters: SiteCol.map((item) => ({
-        text: item,  
-        value: item, 
-      })),
-      onFilter: (value, record) => record["Site"]?.includes(value),filterSearch: true, },
-    {
-      title: "Date Start",
-      dataIndex: "Date Start",
-      key: "Date Start",
-      width: 120,
-      sorter: (a, b) => {
-        const dateA = new Date(a["Date Start"]);
-        const dateB = new Date(b["Date Start"]);
-        return dateB - dateA; // Sorting by descending order (latest date first)
-      },
-      render: (text) => new Date(text).toLocaleDateString(), // Optional: format date for display
-    },
+    return row;
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Updated Data');
+  XLSX.writeFile(workbook, 'updated_data.xlsx');
   
-    {
-      title: "Date Finish",
-      dataIndex: "Date Finish",
-      key: "Date Finish",
-      width: 120,
-      sorter: (a, b) => {
-        const dateA = new Date(a["Date Finish"]);
-        const dateB = new Date(b["Date Finish"]);
-        return dateB - dateA; // Sorting by descending order (latest date first)
-      },
-      render: (text) => new Date(text).toLocaleDateString(), // Optional: format date for display
-    },
-    { title: "Service Type", dataIndex: "Service Type", key: "Service Type", width: 120 },
-    { title: "Duration", dataIndex: "Duration", key: "Duration", width: 100 },
-    { title: "Complaint / Install", dataIndex: "Complaint / Install", key: "Complaint / Install", width: 150 },
-    { title: "Reason Branch", dataIndex: "Reson Branch", key: "Reson Branch", width: 160 , 
-      sorter: (a, b) => a["Reson Branch"] < b["Reson Branch"] ? -1 : 1,
-      filters: Reson_BranchCol.map((item) => ({
-        text: item,  
-        value: item, 
-      })),
-      onFilter: (value, record) => record["Reson Branch"]?.includes(value),filterSearch: true,
-    },
-    {
-      title: "DETAIL",
-      dataIndex: "DETAIL",
-      key: "DETAIL",
-      width: 200,
-      sorter: (a, b) => a["DETAIL"] < b["DETAIL"] ? -1 : 1,
-      filters: detailCol.map((item) => ({
-        text: item,  
-        value: item, 
-      })),
-      onFilter: (value, record) => record["DETAIL"]?.includes(value), filterSearch: true,
+  // Re-add the selectedImages after export
+  setSelectedImages(selectedImages);
+};
 
-    },
+
+  // Handle image viewing
+  const handleViewImages = (images) => {
+    setSelectedImages(images || []);
+    setIsModalOpen(true);
+  };
+
+  // Handle Reason Branch detail view
+  const handleViewDetail = () => {
+    setIsDrawerVisible(true);
+  };
+
+  // Table columns definition
+  const columns = [
+    { title: 'No.', dataIndex: 'Nº', key: 'No.', width: 20 },
+    { title: 'ID Task', dataIndex: 'ID Task', key: 'ID Task', width: 100 },
     {
-      title: "Unit Check",
-      dataIndex: "Unit Check",
-      key: "Unit Check",
+      title: 'Account',
+      dataIndex: 'Account',
+      key: 'Account',
       width: 150,
-      sorter: (a, b) => a["Unit Check"] < b["Unit Check"] ? -1 : 1,
-      filters: Unit_CheckCol.map((item) => ({
-        text: item,  
-        value: item, 
-      })),
-      onFilter: (value, record) => record["Unit Check"]?.includes(value),filterSearch: true,
-
+      filters: AccountCol.map((item) => ({ text: item, value: item })),
+      onFilter: (value, record) => record['Account']?.toString().includes(value),
+      filterSearch: true,
+      sorter: (a, b) => a['Account'] - b['Account'],
+    },
+    { title: 'PRO', dataIndex: 'PRO', key: 'PRO', width: 100 },
+    {
+      title: 'Site',
+      dataIndex: 'Site',
+      key: 'Site',
+      width: 120,
+      sorter: (a, b) => (a['Site'] < b['Site'] ? -1 : 1),
+      filters: SiteCol.map((item) => ({ text: item, value: item })),
+      onFilter: (value, record) => record['Site']?.includes(value),
+      filterSearch: true,
     },
     {
-      title: "Unit Operation",
-      dataIndex: "Unit Operation",
-      key: "Unit Operation",
+      title: 'Date Start',
+      dataIndex: 'Date Start',
+      key: 'Date Start',
+      width: 120,
+      sorter: (a, b) => new Date(b['Date Start']) - new Date(a['Date Start']),
+      render: (text) => new Date(text).toLocaleDateString(),
+    },
+    {
+      title: 'Date Finish',
+      dataIndex: 'Date Finish',
+      key: 'Date Finish',
+      width: 120,
+      sorter: (a, b) => new Date(b['Date Finish']) - new Date(a['Date Finish']),
+      render: (text) => new Date(text).toLocaleDateString(),
+    },
+    { title: 'Service Type', dataIndex: 'Service Type', key: 'Service Type', width: 120 },
+    { title: 'Duration', dataIndex: 'Duration', key: 'Duration', width: 100 },
+    { title: 'Complaint / Install', dataIndex: 'Complaint / Install', key: 'Complaint / Install', width: 150 },
+    {
+      title: 'Reason Branch',
+      dataIndex: 'Reson Branch',
+      key: 'Reson Branch',
       width: 160,
-      sorter: (a, b) => a["Unit Operation"] < b["Unit Operation"] ? -1 : 1,
-      filters: Unit_OperationCol.map((item) => ({
-        text: item,  
-        value: item, 
-      })),
-      onFilter: (value, record) => record["Unit Operation"]?.includes(value),filterSearch: true,
-
+      sorter: (a, b) => (a['Reson Branch'] < b['Reson Branch'] ? -1 : 1),
+      filters: ResonBranchCol.map((item) => ({ text: item, value: item })),
+      onFilter: (value, record) => record['Reson Branch']?.includes(value),
+      filterSearch: true,
     },
     {
-      title: "Partner approve / Not approve",
-      dataIndex: "Partner approve / Not approve",
-      key: "Partner approve / Not approve",
-      width: 180,
-      render: (text, record, index) => (
+      title: 'DETAIL',
+      dataIndex: 'DETAIL',
+      key: 'DETAIL',
+      width: 200,
+      sorter: (a, b) => (a['DETAIL'] < b['DETAIL'] ? -1 : 1),
+      filters: DetailCol.map((item) => ({ text: item, value: item })),
+      onFilter: (value, record) => record['DETAIL']?.includes(value),
+      filterSearch: true,
+    },
+    {
+      title: 'Unit Check',
+      dataIndex: 'Unit Check',
+      key: 'Unit Check',
+      width: 150,
+      sorter: (a, b) => (a['Unit Check'] < b['Unit Check'] ? -1 : 1),
+      filters: UnitCheckCol.map((item) => ({ text: item, value: item })),
+      onFilter: (value, record) => record['Unit Check']?.includes(value),
+      filterSearch: true,
+    },
+    {
+      title: 'Unit Operation',
+      dataIndex: 'Unit Operation',
+      key: 'Unit Operation',
+      width: 160,
+      sorter: (a, b) => (a['Unit Operation'] < b['Unit Operation'] ? -1 : 1),
+      filters: UnitOperationCol.map((item) => ({ text: item, value: item })),
+      onFilter: (value, record) => record['Unit Operation']?.includes(value),
+      filterSearch: true,
+    },
+    {
+      title: 'Metfone Approve',
+      dataIndex: 'Metfone Approve / Not approve',
+      key: 'Metfone Approve / Not approve',
+      render: (value, record) => (
         <Select
-          value={record["Partner approve / Not approve"]} 
-          onChange={(value) => handleApproveChange(index, "Partner approve / Not approve", value)} 
-          style={{ width: 120 }}
+          defaultValue={value}
+          onChange={(val) => handleApproveChange(record.key, 'Metfone Approve / Not approve', val)}
         >
-          <Option value="Approve">Approve</Option>
-          <Option value="Not Approve">Not Approve</Option>
+          <Option value="approve">Approve</Option>
+          <Option value="not approve">Not Approve</Option>
         </Select>
       ),
     },
     {
-      
-      title: "Metfone Approve/Not Approve",
-      dataIndex: "Metfone Approve / Not approve",
-      key: "Metfone Approve / Not Approve",
-      width: 180,
-      render: (text, record, index) => (
+      title: 'Partner Approve',
+      dataIndex: 'Partner approve / Not approve',
+      key: 'Partner approve / Not approve',
+      render: (value, record) => (
         <Select
-          value={record["Metfone Approve / Not approve"]} // Correct binding here as well
-          onChange={(value) => handleApproveChange(index, "Metfone Approve / Not approve", value)}
-          style={{ width: 120 }}
+          defaultValue={value}
+          onChange={(val) => handleApproveChange(record.key, 'Partner approve / Not approve', val)}
         >
-          <Option value="Approve">Approve</Option>
-          <Option value="Not Approve">Not Approve</Option>
+          <Option value="approve">Approve</Option>
+          <Option value="not approve">Not Approve</Option>
         </Select>
       ),
     },
@@ -299,61 +280,48 @@ const ViewImageImt = () => {
       },
     },
   ];
+
   return (
-<div className="min-h-screen bg-gray-100">
-   <div className="flex  items-center justify-center mb-5 gap-2">
-  <h1 className="text-3xl font-bold text-center mt-8 text-blue-600">
-    TOOL VIEW IMAGE
-  </h1>
-</div>
-
-      <div className="flex gap-2">
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search by ID Task"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded shadow-sm"
-          />
-        </div>
-
-        <div className="flex flex-col items-center mb-6">
-          <button
-            onClick={handleViewDetail}
-            className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-green-500 hover:bg-green-600"
-          >
-            <FaEye className="mr-2" />
-            <p>Reason Branch</p>
-          </button>
-        </div>
-
-        <div className="flex flex-col items-center mb-6">
-          <button
-            onClick={handleExportToExcel}
-            className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-red-500 hover:bg-red-600"
-          >
-            <FaFileExcel className="mr-2" />
-            <p>Export to Excel</p>
-          </button>
-        </div>
-
-        <div className="flex flex-col items-center mb-6">
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-            id="file-upload"
-          />
-          <button
-            onClick={() => document.getElementById('file-upload').click()}
-            className="px-4 py-2 rounded flex justify-center items-center text-white font-semibold bg-blue-500 hover:bg-blue-600"
-          >
-            <FaUpload className="mr-2" /> Upload Excel
-          </button>
-        </div>
+    <div >
+     <div className='flex gap-3'>
+      <div>
+      <input
+        id="file-upload"
+        type="file"
+        accept=".xlsx"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      <Button
+        onClick={() => document.getElementById('file-upload').click()}
+        className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-blue-500 hover:bg-blue-600"
+      >
+        <FaUpload className="mr-2" />
+        <p>Upload Excel</p>
+      </Button>
       </div>
+      <div>
+      <Button
+        onClick={handleExportToExcel}
+        className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-green-500 hover:bg-green-600"
+      >
+        <FaFileExcel className="mr-2" />
+        <p>Export to Excel</p>
+      </Button>
+
+    
+      </div>
+      <div>
+      </div>
+     </div>
+
+     <input
+        type="text"
+        placeholder="Search by Task ID"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="my-4 p-2 border border-gray-300 rounded"
+      />
 
       <Table
         columns={columns}
@@ -399,22 +367,9 @@ const ViewImageImt = () => {
     <p className="text-center text-red-500 text-xl">No images available</p>
   )}
 </div>
-
-
-
       </Modal>
-
-      {/* Drawer to display Reason Branch details */}
-      <TopDrawer
-        title="Reason Branch Detail"
-        placement="right"
-        onClose={() => setIsDrawerVisible(false)}
-        visible={isDrawerVisible}
-        width={400}
-        data={data}
-      />
     </div>
-  )
-}
+  );
+};
 
-export default ViewImageImt
+export default ViewImageImt;
