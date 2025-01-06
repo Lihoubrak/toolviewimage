@@ -16,6 +16,7 @@ const ViewImageImt = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [originalData, setOriginalData] = useState([]);
+console.log("selectedImages",selectedImages);
 
   // Extract column names
   const { names: ResonBranchCol } = getNamesAndValues('Reson Branch', data);
@@ -60,18 +61,35 @@ const ViewImageImt = () => {
 
   // Handle approval status change
   const handleApproveChange = (index, column, value) => {
-    const newData = [...data];
-    const recordIndex = data.findIndex(
-      (row) => row['ID Task'] === filteredData[index]['ID Task']
-    );
-  
-    if (recordIndex !== -1) {
-      newData[recordIndex] = { ...newData[recordIndex], [column]: value };
-      setData(newData);
-      message.success('Approval status updated successfully!');  // Success message
-    } else {
-      message.error('Failed to update approval status.');  // Error message if not found
+    // Validate 'filteredData' and 'index'
+    if (!filteredData || !Array.isArray(filteredData) || index < 0 || index >= filteredData.length) {
+      message.error('Invalid filtered data or index.');
+      return;
     }
+  
+    // Get the target task ID
+    const targetTaskId = filteredData[index-1]['ID Task'];
+  
+    // Find the record index in the main 'data' array
+    const recordIndex = data.findIndex((row) => row['ID Task'] === targetTaskId);
+  
+    if (recordIndex === -1) {
+      // If the record is not found
+      message.error(`Task ID ${targetTaskId} not found in the main data.`);
+      return;
+    }
+
+  
+    // Update the specific column in the main 'data' array
+    const updatedData = [...data];
+    updatedData[recordIndex] = {
+      ...updatedData[recordIndex],
+      [column]: value,
+    };
+    // Update state
+    setData(updatedData);
+    // Display success message
+    message.success('Approval status updated successfully!');
   };
   
   // Handle table change (pagination, sorting, etc.)
@@ -82,13 +100,11 @@ const ViewImageImt = () => {
     }
   };
 
-  // Export data to Excel
 // Export data to Excel
 const handleExportToExcel = () => {
   const updatedData = data.filter(
     (row) => row['Metfone Approve / Not approve'] || row['Partner approve / Not approve']
   );
-
   if (!updatedData.length) {
     message.warning('No data to export.');
     return;
@@ -114,10 +130,9 @@ const handleExportToExcel = () => {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Updated Data');
   XLSX.writeFile(workbook, 'updated_data.xlsx');
-  
-  // Re-add the selectedImages after export
-  setSelectedImages(selectedImages);
+  message.success('Exported to Excel successfully!');
 };
+
 
 
   // Handle image viewing
@@ -216,40 +231,43 @@ const handleExportToExcel = () => {
       filterSearch: true,
     },
     {
-      title: 'Metfone Approve',
-      dataIndex: 'Metfone Approve / Not approve',
-      key: 'Metfone Approve / Not approve',
-      render: (value, record) => (
-        <Select
-          defaultValue={value}
-          onChange={(val) => handleApproveChange(record.key, 'Metfone Approve / Not approve', val)}
-        >
-          <Option value="approve">Approve</Option>
-          <Option value="not approve">Not Approve</Option>
-        </Select>
-      ),
-    },
-    {
       title: 'Partner Approve',
       dataIndex: 'Partner approve / Not approve',
       key: 'Partner approve / Not approve',
       render: (value, record) => (
         <Select
           defaultValue={value}
-          onChange={(val) => handleApproveChange(record.key, 'Partner approve / Not approve', val)}
+          onChange={(val) => handleApproveChange(record['Nº'], 'Partner approve / Not approve', val)}
         >
           <Option value="approve">Approve</Option>
-          <Option value="not approve">Not Approve</Option>
+          <Option value="not_approve">Not Approve</Option>
         </Select>
       ),
     },
+    {
+      title: 'Metfone Approve',
+      dataIndex: 'Metfone Approve / Not approve',
+      key: 'Metfone Approve / Not approve',
+      render: (value, record) => {
+        return (
+          <Select
+            defaultValue={value}
+            onChange={(val) => handleApproveChange(record['Nº'], 'Metfone Approve / Not approve', val)} // Use the correct index here
+          >
+            <Option value="approve">Approve</Option>
+            <Option value="not_approve">Not Approve</Option>
+          </Select>
+        );
+      },
+    },
+    
+   
     {
       title: "File Photo",
       key: "File Photo",
       width: 120,
       render: (text, record) => {
         const hasImage = record["File Photo"] && record["File Photo"].some((url) => url && url !== "#N/A");
-
         return (
           <Button
             onClick={() => handleViewImages(record["File Photo"])}
