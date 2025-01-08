@@ -133,7 +133,13 @@ const handleExportToExcel = () => {
   const handleViewDetail = () => {
     setIsDrawerVisible(true);
   };
-
+  const handleNoteChange = (taskId, note) => {
+    const updatedData = data.map((row) =>
+      row['ID Task'] === taskId ? { ...row, Note: note } : row
+    );
+    setData(updatedData);
+  };
+  
   // Table columns definition
   const columns = [
     { title: 'No.', dataIndex: 'Nº', key: 'No.', width: 20 },
@@ -285,6 +291,33 @@ const handleExportToExcel = () => {
         return false;
       },
     },
+    {
+      title: 'Note',
+      dataIndex: 'Note',
+      key: 'Note',
+      render: (value, record) => (
+        <input
+          type="text"
+          value={value || ''}
+          placeholder="Enter note"
+          onChange={(e) => handleNoteChange(record['ID Task'], e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px', // Slightly increased padding for better UX
+            outline: 'none', // Removes default focus outline
+            border: '1px solid #ccc', // Subtle border
+            borderRadius: '5px', // Rounded corners
+            fontSize: '14px', // Clear, readable font size
+            backgroundColor: '#f9f9f9', // Light background for better contrast
+            transition: 'border 0.3s ease', // Smooth animation on hover/focus
+          }}
+          onFocus={(e) => (e.target.style.border = '1px solid #007BFF')} // Blue border on focus
+          onBlur={(e) => (e.target.style.border = '1px solid #ccc')} // Reset border on blur
+        />
+      ),
+    },
+    
+    
   ];
 
   return (
