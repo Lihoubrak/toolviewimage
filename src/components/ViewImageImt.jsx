@@ -16,8 +16,6 @@ const ViewImageImt = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [originalData, setOriginalData] = useState([]);
-console.log("selectedImages",selectedImages);
-
   // Extract column names
   const { names: ResonBranchCol } = getNamesAndValues('Reson Branch', data);
   const { names: DetailCol } = getNamesAndValues('DETAIL', data);
@@ -58,27 +56,15 @@ console.log("selectedImages",selectedImages);
       row['ID Task']?.toString().toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [data, searchQuery]);
-
   // Handle approval status change
-  const handleApproveChange = (index, column, value) => {
-    // Validate 'filteredData' and 'index'
-    if (!filteredData || !Array.isArray(filteredData) || index < 0 || index >= filteredData.length) {
-      message.error('Invalid filtered data or index.');
-      return;
-    }
-  
-    // Get the target task ID
-    const targetTaskId = filteredData[index-1]['ID Task'];
-  
+  const handleApproveChange = (taskId, column, value) => {
     // Find the record index in the main 'data' array
-    const recordIndex = data.findIndex((row) => row['ID Task'] === targetTaskId);
+    const recordIndex = data.findIndex((row) => row['ID Task'] === taskId);
   
     if (recordIndex === -1) {
-      // If the record is not found
-      message.error(`Task ID ${targetTaskId} not found in the main data.`);
+      message.error(`Task ID ${taskId} not found in the main data.`);
       return;
     }
-
   
     // Update the specific column in the main 'data' array
     const updatedData = [...data];
@@ -86,9 +72,9 @@ console.log("selectedImages",selectedImages);
       ...updatedData[recordIndex],
       [column]: value,
     };
+  
     // Update state
     setData(updatedData);
-    // Display success message
     message.success('Approval status updated successfully!');
   };
   
@@ -237,7 +223,7 @@ const handleExportToExcel = () => {
       render: (value, record) => (
         <Select
           defaultValue={value}
-          onChange={(val) => handleApproveChange(record['Nº'], 'Partner approve / Not approve', val)}
+          onChange={(val) => handleApproveChange(record['ID Task'], 'Partner approve / Not approve', val)}
         >
           <Option value="approve">Approve</Option>
           <Option value="not_approve">Not Approve</Option>
@@ -252,7 +238,7 @@ const handleExportToExcel = () => {
         return (
           <Select
             defaultValue={value}
-            onChange={(val) => handleApproveChange(record['Nº'], 'Metfone Approve / Not approve', val)} // Use the correct index here
+            onChange={(val) => handleApproveChange(record['ID Task'], 'Metfone Approve / Not approve', val)} // Use the correct index here
           >
             <Option value="approve">Approve</Option>
             <Option value="not_approve">Not Approve</Option>
