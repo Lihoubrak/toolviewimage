@@ -116,6 +116,8 @@ const handleExportToExcel = () => {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Updated Data');
   XLSX.writeFile(workbook, 'updated_data.xlsx');
+  // Clear data in the table
+  setData([]);
   message.success('Exported to Excel successfully!');
 };
 
