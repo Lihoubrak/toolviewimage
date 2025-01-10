@@ -81,7 +81,9 @@ const ViewImageImt = () => {
   // Handle table change (pagination, sorting, etc.)
   const handleTableChange = (pagination, filters, sorter) => {
     if (Object.keys(filters).every((columnKey) => !filters[columnKey]?.length)) {
-      setData(originalData);
+       console.log(originalData);
+       
+      setData(data);
       return;
     }
   };
@@ -117,7 +119,7 @@ const handleExportToExcel = () => {
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Updated Data');
   XLSX.writeFile(workbook, 'updated_data.xlsx');
   // Clear data in the table
-  setData([]);
+  // setData([]);
   message.success('Exported to Excel successfully!');
 };
 
@@ -125,6 +127,8 @@ const handleExportToExcel = () => {
 
   // Handle image viewing
   const handleViewImages = (images) => {
+    console.log(images);
+    
     setSelectedImages(images || []);
     setIsModalOpen(true);
   };
@@ -261,7 +265,7 @@ const handleExportToExcel = () => {
       key: "File Photo",
       width: 120,
       render: (text, record) => {
-        const hasImage = record["File Photo"] && record["File Photo"].some((url) => url && url !== "#N/A");
+        const hasImage = record["File Photo"] && record["File Photo"].some((url) => url && url !== "#N/A");   
         return (
           <Button
             onClick={() => handleViewImages(record["File Photo"])}
@@ -381,30 +385,58 @@ const handleExportToExcel = () => {
 >
 
      <div className="flex flex-wrap p-4">
-  {selectedImages.length > 0 ? (
-    selectedImages.map((fileId, idx) => {
-      // Generate the full Google Drive URL to view the file
-      const imageUrl = (fileId && fileId !== '#N/A' && fileId !== "") ? `https://drive.google.com/file/d/${fileId}/view` : null;
-   
-      return (
-        <div key={idx} className="w-1/3 p-2">
-          {imageUrl ? (
+     {selectedImages.length > 0 ? (
+  selectedImages.map((fileId, idx) => {
+    // Check if fileId is a Google Drive ID or an external URL
+    const isExternalUrl = fileId && fileId.startsWith("http");
+
+    // Generate the image URL for Google Drive or keep the external URL
+    const imageUrl = (fileId && fileId !== '#N/A' && fileId !== "") 
+      ? (isExternalUrl ? fileId : `https://drive.google.com/file/d/${fileId}/view`)
+      : null;  // If fileId is invalid, set imageUrl to null
+
+    return (
+      <div key={idx} className="w-1/3 p-2">
+        {imageUrl ? (
+          isExternalUrl ? (
+            // For external URLs, display a clickable link instead of an image
+            <a
+            href={imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-blue-600 hover:text-blue-800 font-semibold text-lg mb-2 transition-colors"
+          >
+            <div className="flex items-center">
+              <p>Click </p>
+              <span className="mx-1">→</span> 
+              <span>{imageUrl}</span>
+            </div>
+            <p className="text-gray-600 text-sm mt-1">
+              Note: This is not a Google link, so it cannot be previewed here directly.
+            </p>
+          </a>
+          
+          
+          ) : (
             <img
-              src={`https://drive.google.com/thumbnail?id=${fileId}`}
-              alt={`Image ${idx + 1} - Image loading late , please click to open full size`}
+              src={`https://drive.google.com/thumbnail?id=${fileId}`}  // Thumbnail for Google Drive
+              alt={`Image ${idx + 1} - Image loading late, please click to open full size`}
               loading="lazy"
               onClick={() => window.open(imageUrl, "_blank")}
               className="cursor-pointer border border-gray-300 rounded w-full h-auto object-contain"
             />
-          ) : (
-            <p className="text-center text-red-500 text-xl">No image available</p>
-          )}
-        </div>
-      );
-    })
-  ) : (
-    <p className="text-center text-red-500 text-xl">No images available</p>
-  )}
+          )
+        ) : (
+          <p className="text-center text-red-500 text-xl">No image available</p>
+        )}
+      </div>
+    );
+  })
+) : (
+  <p className="text-center text-red-500 text-xl">No images available</p>
+)}
+
+
 </div>
       </Modal>
     </div>

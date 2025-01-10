@@ -14,23 +14,24 @@ export const processFile = (file, setData) => {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       let rows = XLSX.utils.sheet_to_json(sheet);
 
-      // Process the rows and extract Google Drive file IDs
+      // Process the rows and handle Google Drive file IDs
       rows = rows.map((row) => {
         if (row["File Photo"]) {
           row["File Photo"] = row["File Photo"].split(",").map((url) => {
-            // Match and extract file ID from various Google Drive URLs
+            // Check if the URL is a Google Drive link
             const fileIdMatch =
               url.match(
-                /(?:drive|docs)\.google\.com\/(?:.*\/d\/|.*\/file\/d\/|.*\/drive\/folders\/|.*\/open\?id=)([^\/?&=]+)/
+                /(?:drive|docs)\.google\.com\/(?:.*\/d\/|.*\/file\/d\/|.*\/drive\/folders\/|.*\/open\?id=)([^\/?&=]+)/ 
               ) ||
               url.match(/googleusercontent\.com\/.*\/d\/([^\/?&=]+)/) ||
               url.match(/drive\.google\.com\/.*id=([^\/?&=]+)/);
 
+            // If it's a Google Drive link, extract the file ID
             if (fileIdMatch && fileIdMatch[1]) {
-              // Return only the file ID
-              return fileIdMatch[1];
+              return fileIdMatch[1]; // Return only the file ID
             }
-            return url; // Return the original URL if no file ID found
+            // If it's not a Google Drive link, return the URL as-is
+            return url;
           });
         }
         return row;
