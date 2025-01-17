@@ -81,7 +81,6 @@ const ViewImageImt = () => {
   // Handle table change (pagination, sorting, etc.)
   const handleTableChange = (pagination, filters, sorter) => {
     if (Object.keys(filters).every((columnKey) => !filters[columnKey]?.length)) {
-       console.log(originalData);
        
       setData(data);
       return;
@@ -93,42 +92,91 @@ const handleExportToExcel = () => {
   const updatedData = data.filter(
     (row) => row['Metfone Approve / Not approve'] || row['Partner approve / Not approve']
   );
+
   if (!updatedData.length) {
     message.warning('No data to export.');
     return;
   }
 
+  // Define base column order
+  let columnOrder = [
+    'Nº',
+    'ID Task',
+    'Account',
+    'PRO',
+    'Site',
+    'Date Start',
+    'Date Finish',
+    'Service Type',
+    'Duration',
+    'Complaint / Install',
+    'Reson Branch',
+    'DETAIL',
+    'Unit Check',
+    'Unit Operation',
+    'Partner approve / Not approve',
+    'Metfone Approve / Not approve',
+    'File Photo',
+  ];
+
+  // Check if any row contains 'Note', dynamically add it to columnOrder
+  const containsNote = updatedData.some((row) => row['Note']);
+  if (containsNote) {
+    columnOrder.push('Note'); // Add 'Note' to the column order
+  }
+
+  // Reorder and format data
   const formattedData = updatedData.map((row) => {
+    // Handle File Photo formatting
     if (row['File Photo']) {
       if (Array.isArray(row['File Photo'])) {
         row['File Photo'] = row['File Photo']
           .filter((imageId) => imageId && imageId !== '#N/A')
-          .map((imageId) => `https://drive.google.com/file/d/${imageId}/view`)
+          .map((imageId) =>
+            /^[a-zA-Z0-9_-]{25,}$/.test(imageId) // Check if it's a valid Google Drive ID
+              ? `https://drive.google.com/file/d/${imageId}/view`
+              : imageId // Keep the original value if it's not a Drive ID
+          )
           .join(', ');
       } else if (row['File Photo'] !== '#N/A' && row['File Photo'] !== '') {
-        row['File Photo'] = `https://drive.google.com/file/d/${row['File Photo']}/view`;
+        if (/^[a-zA-Z0-9_-]{25,}$/.test(row['File Photo'])) {
+          row['File Photo'] = `https://drive.google.com/file/d/${row['File Photo']}/view`;
+        }
+        // Else, keep the value as is
       } else {
         row['File Photo'] = '#N/A';
       }
     }
-    return row;
+
+    // Reorder columns based on the specified order
+    const reorderedRow = {};
+    columnOrder.forEach((col) => {
+      reorderedRow[col] = row[col] !== undefined ? row[col] : ''; // Set empty string for missing columns
+    });
+
+    return reorderedRow;
   });
 
+  // Export to Excel
   const worksheet = XLSX.utils.json_to_sheet(formattedData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Updated Data');
   XLSX.writeFile(workbook, 'updated_data.xlsx');
+
   // Clear data in the table
   setData([]);
   message.success('Exported to Excel successfully!');
+   // Refresh the page
+   setTimeout(() => {
+    window.location.reload();
+  }, 500);
 };
 
 
 
   // Handle image viewing
   const handleViewImages = (images) => {
-    console.log(images);
-    
+  
     setSelectedImages(images || []);
     setIsModalOpen(true);
   };
