@@ -280,6 +280,12 @@ const handleExportToExcel = () => {
       title: 'Partner Approve',
       dataIndex: 'Partner approve / Not approve',
       key: 'Partner approve / Not approve',
+      filters: [
+        { text: 'Approve', value: 'approve' },
+        { text: 'Not Approve', value: 'not_approve' }
+      ],
+      onFilter: (value, record) => record['Partner approve / Not approve'] === value,
+      filterSearch: true,
       render: (value, record) => (
         <Select
           defaultValue={value}
@@ -294,11 +300,17 @@ const handleExportToExcel = () => {
       title: 'Metfone Approve',
       dataIndex: 'Metfone Approve / Not approve',
       key: 'Metfone Approve / Not approve',
+      filters: [
+        { text: 'Approve', value: 'approve' },
+        { text: 'Not Approve', value: 'not_approve' }
+      ],
+      onFilter: (value, record) => record['Metfone Approve / Not approve'] === value,
+      filterSearch: true,
       render: (value, record) => {
         return (
           <Select
             defaultValue={value}
-            onChange={(val) => handleApproveChange(record['ID Task'], 'Metfone Approve / Not approve', val)} // Use the correct index here
+            onChange={(val) => handleApproveChange(record['ID Task'], 'Metfone Approve / Not approve', val)}
           >
             <Option value="approve">Approve</Option>
             <Option value="not_approve">Not Approve</Option>
@@ -306,6 +318,7 @@ const handleExportToExcel = () => {
         );
       },
     },
+    
     
    
     {
