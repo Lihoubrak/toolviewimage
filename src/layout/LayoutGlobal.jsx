@@ -51,7 +51,7 @@ const LayoutGlobal = ({ children }) => {
       >
         <div className="flex justify-center p-4">
           <img
-            src="src/assets/photo.jpg"
+            src="public/images/photo.jpg"
             alt="Logo"
             className="w-12 h-12 rounded-full"
           />
