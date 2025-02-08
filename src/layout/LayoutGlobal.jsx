@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Tooltip } from 'antd';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { FileImageOutlined, BarChartOutlined, FileExcelOutlined } from '@ant-design/icons';
+import React, { useState } from "react";
+import { Layout, Menu, Tooltip } from "antd";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  FileImageOutlined,
+  BarChartOutlined,
+  FileExcelOutlined,
+} from "@ant-design/icons";
 
 const { Sider, Content } = Layout;
 
@@ -12,9 +16,9 @@ function getItem(label, key, icon, link) {
 
 // Sidebar menu items
 const items = [
-  getItem('View Image', '1', <FileImageOutlined />, '/'),
-  getItem('KPI', '2', <BarChartOutlined />, '/kpi'),
-  getItem('Compare Excel', '3', <FileExcelOutlined />, '/compareexcel'),
+  getItem("View Image", "1", <FileImageOutlined />, "/"),
+  getItem("KPI", "2", <BarChartOutlined />, "/kpi"),
+  getItem("Compare Excel", "3", <FileExcelOutlined />, "/compareexcel"),
 ];
 
 const LayoutGlobal = ({ children }) => {
@@ -23,11 +27,12 @@ const LayoutGlobal = ({ children }) => {
   const navigate = useNavigate();
 
   // Determine the selected key based on the current route
-  const selectedKey = items.find(item => item.link === location.pathname)?.key || '1';
+  const selectedKey =
+    items.find((item) => item.link === location.pathname)?.key || "1";
 
   // Handle menu item clicks
   const handleMenuClick = (e) => {
-    const selectedItem = items.find(item => item.key === e.key);
+    const selectedItem = items.find((item) => item.key === e.key);
     if (selectedItem) {
       navigate(selectedItem.link); // Navigate to the selected route
     }
@@ -45,13 +50,13 @@ const LayoutGlobal = ({ children }) => {
         className="bg-gray-800 text-white fixed top-0 bottom-0 left-0 z-10"
       >
         <div className="flex justify-center p-4">
-          {/* Logo */}
           <img
-            src="https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp"
+            src="src/assets/photo.jpg"
             alt="Logo"
-            className="w-12 h-12"
+            className="w-12 h-12 rounded-full"
           />
         </div>
+
         <Menu
           theme="dark"
           mode="inline"
@@ -75,10 +80,13 @@ const LayoutGlobal = ({ children }) => {
       </Sider>
 
       {/* Main Layout */}
-      <Layout style={{ marginLeft: collapsed ? 80 : 240, transition: 'margin-left 0.2s' }}>
-        <Content className="p-3">
-          {children}
-        </Content>
+      <Layout
+        style={{
+          marginLeft: collapsed ? 80 : 240,
+          transition: "margin-left 0.2s",
+        }}
+      >
+        <Content className="p-3">{children}</Content>
       </Layout>
     </Layout>
   );
