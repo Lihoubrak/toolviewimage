@@ -1,36 +1,35 @@
-import React, { useState } from "react";
-import { Layout, Menu, Tooltip } from "antd";
+import React, { useState, useEffect } from "react";
+import { Layout, Menu, Tooltip, Grid } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  FileImageOutlined,
-  BarChartOutlined,
-  FileExcelOutlined,
-} from "@ant-design/icons";
-
+import { FiImage, FiBarChart2, FiFileText } from "react-icons/fi";
+import { FaFirefoxBrowser } from "react-icons/fa";
 const { Sider, Content } = Layout;
+const { useBreakpoint } = Grid;
 
-// Helper function to create menu item objects
-function getItem(label, key, icon, link) {
-  return { key, icon, label, link };
-}
+const getItem = (label, key, icon, link) => ({ key, icon, label, link });
 
-// Define the menu items
 const items = [
-  getItem("View Image", "1", <FileImageOutlined />, "/"),
-  getItem("KPI", "2", <BarChartOutlined />, "/kpi"),
-  getItem("Compare Excel", "3", <FileExcelOutlined />, "/compareexcel"),
+  getItem("View Image", "1", <FiImage />, "/"),
+  getItem("KPI", "2", <FiBarChart2 />, "/kpi"),
+  getItem("Compare Excel", "3", <FiFileText />, "/compareexcel"),
+  getItem("Website Work", "4", <FaFirefoxBrowser />, "/listweb"),
 ];
 
 const LayoutGlobal = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const screens = useBreakpoint();
 
-  // Determine the selected key based on the current route
+  useEffect(() => {
+    if (!screens.md) {
+      setCollapsed(true);
+    }
+  }, [screens.md]);
+
   const selectedKey =
     items.find((item) => item.link === location.pathname)?.key || "1";
 
-  // Handle menu item clicks
   const handleMenuClick = (e) => {
     const selectedItem = items.find((item) => item.key === e.key);
     if (selectedItem) {
@@ -38,57 +37,51 @@ const LayoutGlobal = ({ children }) => {
     }
   };
 
-  // Create the items array for the antd Menu component
-  const menuItemsForAntd = items.map((item) => ({
-    key: item.key,
-    icon: item.icon,
-    // When collapsed, wrap the label in a Tooltip so the full label shows on hover
-    label: collapsed ? (
-      <Tooltip title={item.label} placement="right">
-        <span>{item.label}</span>
-      </Tooltip>
-    ) : (
-      item.label
-    ),
-  }));
-
   return (
-    <Layout>
+    <Layout className="min-h-screen">
       {/* Sidebar */}
       <Sider
         collapsible
         collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        width={240} // Width when expanded
-        collapsedWidth={80} // Width when collapsed
-        className="bg-gray-800 text-white fixed top-0 bottom-0 left-0 z-10"
+        onCollapse={setCollapsed}
+        width={240}
+        collapsedWidth={screens.xs ? 0 : 90}
+        className="fixed top-0 left-0 bottom-0 bg-gray-900 text-white shadow-lg"
       >
-        <div className="flex justify-center p-4">
+        <div className="flex items-center justify-center p-4 border-b border-gray-700">
           <img
             src="/images/photo.jpg"
             alt="Logo"
-            className="w-12 h-12 rounded-full"
+            className="w-14 h-14 rounded-full border-2 border-white shadow-md"
           />
         </div>
-
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={[selectedKey]}
           onClick={handleMenuClick}
-          inlineCollapsed={collapsed}
-          items={menuItemsForAntd} // Pass items via the `items` prop
+          className="mt-2"
+          items={items.map((item) => ({
+            key: item.key,
+            icon: item.icon,
+            label: collapsed ? (
+              <Tooltip title={item.label} placement="right">
+                <span>{item.label}</span>
+              </Tooltip>
+            ) : (
+              <span>{item.label}</span>
+            ),
+          }))}
         />
       </Sider>
 
       {/* Main Content Area */}
       <Layout
-        style={{
-          marginLeft: collapsed ? 80 : 240,
-          transition: "margin-left 0.2s",
-        }}
+        className="transition-all"
+        style={{ marginLeft: collapsed ? (screens.xs ? 0 : 80) : 240 }}
       >
-        <Content className="p-3">{children}</Content>
+        {/* Content */}
+        <Content className="p-6 bg-gray-100 min-h-screen">{children}</Content>
       </Layout>
     </Layout>
   );

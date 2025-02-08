@@ -461,7 +461,7 @@ const ViewImageImt = () => {
           placeholder="Search by Task ID"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
+          className="w-full p-2 border outline-none border-gray-300 rounded"
         />
       </div>
 
