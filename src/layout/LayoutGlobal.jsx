@@ -9,12 +9,12 @@ import {
 
 const { Sider, Content } = Layout;
 
-// Function to generate menu items
+// Helper function to create menu item objects
 function getItem(label, key, icon, link) {
   return { key, icon, label, link };
 }
 
-// Sidebar menu items
+// Define the menu items
 const items = [
   getItem("View Image", "1", <FileImageOutlined />, "/"),
   getItem("KPI", "2", <BarChartOutlined />, "/kpi"),
@@ -34,9 +34,23 @@ const LayoutGlobal = ({ children }) => {
   const handleMenuClick = (e) => {
     const selectedItem = items.find((item) => item.key === e.key);
     if (selectedItem) {
-      navigate(selectedItem.link); // Navigate to the selected route
+      navigate(selectedItem.link);
     }
   };
+
+  // Create the items array for the antd Menu component
+  const menuItemsForAntd = items.map((item) => ({
+    key: item.key,
+    icon: item.icon,
+    // When collapsed, wrap the label in a Tooltip so the full label shows on hover
+    label: collapsed ? (
+      <Tooltip title={item.label} placement="right">
+        <span>{item.label}</span>
+      </Tooltip>
+    ) : (
+      item.label
+    ),
+  }));
 
   return (
     <Layout>
@@ -62,24 +76,12 @@ const LayoutGlobal = ({ children }) => {
           mode="inline"
           selectedKeys={[selectedKey]}
           onClick={handleMenuClick}
-          inlineCollapsed={collapsed} // Ensure the menu respects the collapsed state
-        >
-          {items.map((item) => (
-            <Menu.Item key={item.key} icon={item.icon}>
-              {/* Disable tooltip when collapsed */}
-              {collapsed ? (
-                <Tooltip title={null} placement="right">
-                  <span>{item.label}</span>
-                </Tooltip>
-              ) : (
-                item.label
-              )}
-            </Menu.Item>
-          ))}
-        </Menu>
+          inlineCollapsed={collapsed}
+          items={menuItemsForAntd} // Pass items via the `items` prop
+        />
       </Sider>
 
-      {/* Main Layout */}
+      {/* Main Content Area */}
       <Layout
         style={{
           marginLeft: collapsed ? 80 : 240,

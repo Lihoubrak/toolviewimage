@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 
-export const processFile = (file, setData) => {
+export const processFile = (file, setData, setLoading) => {
   if (!file.name.endsWith(".xlsx")) {
     alert("Please upload a valid Excel file.");
     return;
@@ -21,7 +21,7 @@ export const processFile = (file, setData) => {
             // Check if the URL is a Google Drive link
             const fileIdMatch =
               url.match(
-                /(?:drive|docs)\.google\.com\/(?:.*\/d\/|.*\/file\/d\/|.*\/drive\/folders\/|.*\/open\?id=)([^\/?&=]+)/ 
+                /(?:drive|docs)\.google\.com\/(?:.*\/d\/|.*\/file\/d\/|.*\/drive\/folders\/|.*\/open\?id=)([^\/?&=]+)/
               ) ||
               url.match(/googleusercontent\.com\/.*\/d\/([^\/?&=]+)/) ||
               url.match(/drive\.google\.com\/.*id=([^\/?&=]+)/);
@@ -37,24 +37,14 @@ export const processFile = (file, setData) => {
         return row;
       });
 
-      setData(rows); // Set the data state with the processed rows
+      setData(rows);
     } catch (error) {
       alert("Error processing the file.");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   reader.readAsBinaryString(file);
-};
-
-export const exportToExcel = (data, fileName) => {
-  if (!data || data.length === 0) {
-    alert("No data to export.");
-    return;
-  }
-
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-  XLSX.writeFile(workbook, fileName);
 };
