@@ -6,3 +6,20 @@ body {
   font-family: "Poppins", sans-serif;
   font-weight: 500;
 }
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px; /* Smaller width of scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Scrollbar track color */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888; /* Scrollbar thumb color */
+  border-radius: 6px; /* Round the corners of the scrollbar */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Hover state of the scrollbar */
+}

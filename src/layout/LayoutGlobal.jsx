@@ -65,7 +65,7 @@ const LayoutGlobal = ({ children }) => {
             key: item.key,
             icon: item.icon,
             label: collapsed ? (
-              <Tooltip title={item.label} placement="right">
+              <Tooltip placement="right">
                 <span>{item.label}</span>
               </Tooltip>
             ) : (
@@ -77,11 +77,11 @@ const LayoutGlobal = ({ children }) => {
 
       {/* Main Content Area */}
       <Layout
-        className="transition-all"
+        className="transition-all "
         style={{ marginLeft: collapsed ? (screens.xs ? 0 : 80) : 240 }}
       >
         {/* Content */}
-        <Content className="p-6 bg-gray-100 min-h-screen">{children}</Content>
+        <Content className="p-6 bg-gray-100">{children}</Content>
       </Layout>
     </Layout>
   );

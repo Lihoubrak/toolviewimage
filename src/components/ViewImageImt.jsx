@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Modal, Table, Select, message, Spin } from "antd";
 import { FaFileExcel, FaUpload } from "react-icons/fa";
 import * as XLSX from "xlsx";
@@ -13,6 +13,8 @@ const ViewImageImt = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const headeRef = useRef(null);
+  const [isHeaderFixed, setIsHeaderFixed] = useState(false);
   // Extract column names
   const { names: ResonBranchCol } = getNamesAndValues("Reson Branch", data);
   const { names: DetailCol } = getNamesAndValues("DETAIL", data);
@@ -423,46 +425,73 @@ const ViewImageImt = () => {
     },
   ];
 
-  return (
-    <div className="container mx-auto p-4">
-      {/* Responsive Button Container */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-3">
-        <div>
-          <input
-            id="file-upload"
-            type="file"
-            accept=".xlsx"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          <Button
-            onClick={() => document.getElementById("file-upload").click()}
-            className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-blue-500 hover:bg-blue-600"
-          >
-            <FaUpload className="mr-2" />
-            <p>Upload Excel</p>
-          </Button>
-        </div>
-        <div>
-          <Button
-            onClick={handleExportToExcel}
-            className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-green-500 hover:bg-green-600"
-          >
-            <FaFileExcel className="mr-2" />
-            <p>Export to Excel</p>
-          </Button>
-        </div>
-      </div>
+  useEffect(() => {
+    const handleScroll = () => {
+      if (headeRef.current) {
+        const headerHeight = headeRef.current.offsetHeight;
+        const scrollPosition = window.scrollY;
 
-      {/* Responsive Search Input */}
-      <div className="mt-4">
-        <input
-          type="text"
-          placeholder="Search by Task ID"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border outline-none border-gray-300 rounded"
-        />
+        // Add fixed class if scrolled past the header
+        if (scrollPosition > headerHeight) {
+          setIsHeaderFixed(true);
+        } else {
+          setIsHeaderFixed(false);
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+  return (
+    <div className="container mx-auto p-4 relative">
+      <div
+        ref={headeRef}
+        className={`w-full transition-all duration-300 ease-in-out ${
+          isHeaderFixed
+            ? "sticky top-0 left-0 right-0 z-50 bg-white shadow-lg p-6"
+            : "p-4"
+        }`}
+      >
+        {/* Responsive Button Container */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-3">
+          <div>
+            <input
+              id="file-upload"
+              type="file"
+              accept=".xlsx"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <Button
+              onClick={() => document.getElementById("file-upload").click()}
+              className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-blue-500 hover:bg-blue-600"
+            >
+              <FaUpload className="mr-2" />
+              <p>Upload Excel</p>
+            </Button>
+          </div>
+          <div>
+            <Button
+              onClick={handleExportToExcel}
+              className="px-4 py-2 flex justify-center items-center rounded text-white font-semibold bg-green-500 hover:bg-green-600"
+            >
+              <FaFileExcel className="mr-2" />
+              <p>Export to Excel</p>
+            </Button>
+          </div>
+        </div>
+
+        {/* Responsive Search Input */}
+        <div className="mt-4">
+          <input
+            type="text"
+            placeholder="Search by Task ID"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-2 border outline-none border-gray-300 rounded"
+          />
+        </div>
       </div>
 
       {/* Table Section */}
@@ -475,6 +504,7 @@ const ViewImageImt = () => {
             rowKey={(record) => record["ID Task"]}
             scroll={{ x: "max-content" }}
             onChange={handleTableChange}
+            className="rounded-lg shadow-md border border-gray-300"
           />
         </Spin>
       </div>
