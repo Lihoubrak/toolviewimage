@@ -4,54 +4,36 @@ import LayoutGlobal from "../layout/LayoutGlobal";
 export default function ListWeb() {
   const websites = [
     {
-      name: "GitHub",
-      url: "https://github.com",
-      description: "Lưu trữ mã nguồn và quản lý dự án.",
+      name: "IMT",
+      url: "http://imt.metfone.com.kh/",
     },
     {
-      name: "Stack Overflow",
-      url: "https://stackoverflow.com",
-      description: "Hỏi đáp lập trình, debug code.",
+      name: "CNOC",
+      url: "http://10.79.9.206:9000/",
     },
     {
-      name: "MDN Web Docs",
-      url: "https://developer.mozilla.org",
-      description: "Tài liệu chính thức về web (HTML, CSS, JS).",
+      name: "Data Security",
+      url: "http://datasecurity.metfone.com.kh/",
     },
     {
-      name: "W3Schools",
-      url: "https://www.w3schools.com",
-      description: "Học lập trình từ cơ bản đến nâng cao.",
+      name: "NIMS",
+      url: "http://100.99.3.4:8082/passportv3/login?appCode=NIMS_V2&service=http%3A%2F%2F10.79.83.193%3A9004%2FNIMS%2FIndex.do",
     },
     {
-      name: "FreeCodeCamp",
-      url: "https://www.freecodecamp.org",
-      description: "Khoá học lập trình miễn phí.",
+      name: " Employee Info",
+      url: "http://10.30.132.248:8188/ESS/authenticateAction.do?_vt=979af99c5ee09832f619950516ec8d6e",
     },
     {
-      name: "LeetCode",
-      url: "https://leetcode.com",
-      description: "Luyện thuật toán và kỹ năng phỏng vấn.",
+      name: "VOffice",
+      url: "http://voffice.viettel.vn/app-view/",
     },
     {
-      name: "Codeforces",
-      url: "https://codeforces.com",
-      description: "Thi đấu lập trình competitive programming.",
+      name: "IMaster NCE",
+      url: "https://10.79.43.115:31943/",
     },
     {
-      name: "HackerRank",
-      url: "https://www.hackerrank.com",
-      description: "Luyện tập code và phỏng vấn kỹ thuật.",
-    },
-    {
-      name: "GeeksforGeeks",
-      url: "https://www.geeksforgeeks.org",
-      description: "Tài nguyên lập trình và thuật toán.",
-    },
-    {
-      name: "DevDocs",
-      url: "https://devdocs.io",
-      description: "Tài liệu lập trình đa ngôn ngữ, dễ tra cứu.",
+      name: "IP Monitor System",
+      url: "https://10.79.25.116/#top",
     },
   ];
 
@@ -74,7 +56,6 @@ export default function ListWeb() {
                 <h2 className="text-xl font-semibold text-[#974a06]">
                   {site.name}
                 </h2>
-                <p className="text-gray-700 mt-2">{site.description}</p>
               </a>
             ))}
           </div>
