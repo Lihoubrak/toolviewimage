@@ -3,6 +3,7 @@ import { Layout, Menu, Tooltip, Grid } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiImage, FiBarChart2, FiFileText } from "react-icons/fi";
 import { FaFirefoxBrowser } from "react-icons/fa";
+
 const { Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
 
@@ -21,67 +22,84 @@ const LayoutGlobal = ({ children }) => {
   const navigate = useNavigate();
   const screens = useBreakpoint();
 
+  // Handle sidebar collapse based on screen size
   useEffect(() => {
-    if (!screens.md) {
-      setCollapsed(true);
-    }
+    setCollapsed(!screens.md);
   }, [screens.md]);
 
-  const selectedKey =
-    items.find((item) => item.link === location.pathname)?.key || "1";
+  // Determine selected menu item
+  const selectedKey = items.find((item) => item.link === location.pathname)?.key || "1";
 
-  const handleMenuClick = (e) => {
-    const selectedItem = items.find((item) => item.key === e.key);
+  // Handle menu item click
+  const handleMenuClick = ({ key }) => {
+    const selectedItem = items.find((item) => item.key === key);
     if (selectedItem) {
       navigate(selectedItem.link);
     }
   };
 
   return (
-    <Layout className="min-h-screen">
+    <Layout className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        width={240}
-        collapsedWidth={screens.xs ? 0 : 90}
-        className="fixed top-0 left-0 bottom-0 bg-gray-900 text-white shadow-lg"
+        width={250}
+        collapsedWidth={screens.xs ? 0 : 80}
+        trigger={null}
+        className="fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-800 to-gray-900 text-white shadow-xl"
+        style={{ transition: "width 0.3s ease-in-out" }}
       >
+        {/* Logo Section */}
         <div className="flex items-center justify-center p-4 border-b border-gray-700">
           <img
             src="/images/photo.jpg"
             alt="Logo"
-            className="w-14 h-14 rounded-full border-2 border-white shadow-md"
+            className={`h-12 w-12 rounded-full border-2 border-white shadow-md transition-transform duration-300 ${
+              collapsed ? "scale-90" : "scale-100"
+            }`}
           />
         </div>
+
+        {/* Menu */}
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={[selectedKey]}
           onClick={handleMenuClick}
-          className="mt-2"
+          className="mt-4"
           items={items.map((item) => ({
             key: item.key,
-            icon: item.icon,
+            icon: (
+              <span className="text-lg">{item.icon}</span>
+            ),
             label: collapsed ? (
-              <Tooltip placement="right">
-                <span>{item.label}</span>
+              <Tooltip placement="right" title={item.label}>
+                <span className="sr-only">{item.label}</span>
               </Tooltip>
             ) : (
-              <span>{item.label}</span>
+              <span className="font-medium">{item.label}</span>
             ),
           }))}
+          style={{ background: "transparent", borderRight: "none" }}
         />
       </Sider>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <Layout
-        className="transition-all "
-        style={{ marginLeft: collapsed ? (screens.xs ? 0 : 80) : 240 }}
+        className="transition-all duration-300"
+        style={{
+          marginLeft: collapsed ? (screens.xs ? 0 : 80) : 250,
+          minHeight: "100vh",
+        }}
       >
-        {/* Content */}
-        <Content className="p-6 bg-gray-100">{children}</Content>
+        <Content
+          className="p-6 md:p-8 lg:p-10 bg-white rounded-lg shadow-sm m-4"
+          style={{ minHeight: "calc(100vh - 2rem)" }}
+        >
+          {children}
+        </Content>
       </Layout>
     </Layout>
   );
